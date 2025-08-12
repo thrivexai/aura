@@ -495,4 +495,4 @@ const SalesPage = () => {
   );
 };
 
-export default Checkout;
+export default SalesPage;
