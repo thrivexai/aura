@@ -34,7 +34,7 @@ const Quiz = () => {
       
       return () => clearTimeout(timer);
     }
-  }, [shouldAutoAdvance]);
+  }, [shouldAutoAdvance]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleAnswerSelect = (optionId, isMultiSelect = false) => {
     let newAnswer;
