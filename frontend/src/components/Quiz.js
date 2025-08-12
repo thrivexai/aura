@@ -12,6 +12,7 @@ const Quiz = () => {
   const { funnelData, setFunnelData } = useContext(FunnelContext);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState({});
+  const [shouldAutoAdvance, setShouldAutoAdvance] = useState(false);
 
   const currentQuestion = quizQuestions[currentQuestionIndex];
   const progress = ((currentQuestionIndex + 1) / quizQuestions.length) * 100;
@@ -23,6 +24,18 @@ const Quiz = () => {
     });
   }, [currentQuestionIndex, currentQuestion.id]);
 
+  // Effect para manejar el auto-avance
+  useEffect(() => {
+    if (shouldAutoAdvance) {
+      const timer = setTimeout(() => {
+        handleNext();
+        setShouldAutoAdvance(false);
+      }, 800);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [shouldAutoAdvance]);
+
   const handleAnswerSelect = (optionId, isMultiSelect = false) => {
     let newAnswer;
     
@@ -33,24 +46,14 @@ const Quiz = () => {
       } else {
         newAnswer = [...currentAnswers, optionId];
       }
-      
-      setSelectedAnswers(prev => ({
-        ...prev,
-        [currentQuestion.id]: newAnswer
-      }));
     } else {
       newAnswer = optionId;
-      
-      setSelectedAnswers(prev => ({
-        ...prev,
-        [currentQuestion.id]: newAnswer
-      }));
-      
-      // Para preguntas de selección única, pasar automáticamente después de un momento
-      setTimeout(() => {
-        handleNext();
-      }, 800); // Aumenté el delay para mejor UX
     }
+
+    setSelectedAnswers(prev => ({
+      ...prev,
+      [currentQuestion.id]: newAnswer
+    }));
 
     trackEvent('quiz_answer', {
       step_index: currentQuestionIndex + 1,
@@ -58,6 +61,11 @@ const Quiz = () => {
       option_id: optionId,
       is_multi_select: isMultiSelect
     });
+
+    // Para preguntas de selección única, activar auto-avance
+    if (!isMultiSelect) {
+      setShouldAutoAdvance(true);
+    }
   };
 
   const handleNext = () => {
