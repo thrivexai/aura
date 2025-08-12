@@ -220,6 +220,55 @@ export const diagnosisTemplates = {
   }
 };
 
+// Contenido del workshop actualizado
+export const workshopContent = {
+  puv: "En 3 sesiones vas a descubrir cómo reducir drásticamente los costos de tu marca de moda y aumentar tu rentabilidad usando IA, sin perder calidad y sin depender de agencias costosas.",
+  days: [
+    {
+      id: 1,
+      title: "Día 1: Identificar fugas de dinero y cómo cerrarlas",
+      content: [
+        "Por qué las marcas rentables no son las más grandes",
+        "Las 5 fugas de dinero más comunes en moda",
+        "Casos reales de ahorro del 50-70% en costos",
+        "El nuevo mindset: rentabilidad antes que tamaño"
+      ]
+    },
+    {
+      id: 2,
+      title: "Día 2: El método para producir más gastando menos",
+      content: [
+        "Caso real: de 3 meses y $5,000 a 2 semanas y $500",
+        "Los 3 pilares del método: Collections, Marketer, Pictures",
+        "Ejemplo en vivo con una prenda real",
+        "Conceptualización rápida con IA"
+      ]
+    },
+    {
+      id: 3,
+      title: "Día 3: El sistema completo para hacerlo de forma continua",
+      content: [
+        "Presentación de Aura X-Tyle + X-Chool",
+        "Sistema completo de automatización",
+        "Cómo mantener la calidad mientras reduces costos",
+        "Plan de implementación paso a paso"
+      ]
+    }
+  ],
+  includes: [
+    "Grabación completa de los tres días",
+    "Guía completa de prompts para IA",
+    "Todos los recursos utilizados durante el workshop",
+    "Acceso al grupo exclusivo de WhatsApp"
+  ],
+  schedule: {
+    days: "Lunes, Martes y Miércoles",
+    time: "7:00 PM",
+    timezone: "Hora Colombia",
+    whatsappGroup: "https://chat.whatsapp.com/F5rbmNKuMLtK0g3fylTSH2"
+  }
+};
+
 // Mock leads para el admin panel
 export const mockLeads = [
   {
