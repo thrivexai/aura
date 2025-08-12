@@ -64,17 +64,11 @@ const Quiz = () => {
   };
   // Effect para manejar el auto-avance
   useEffect(() => {
-    console.log('🔍 Auto-advance effect triggered:', { shouldAutoAdvance, currentQuestionIndex });
-    
     if (shouldAutoAdvance) {
-      console.log('⏰ Starting auto-advance timer...');
       const timer = setTimeout(() => {
-        console.log('🚀 Executing auto-advance...');
         if (currentQuestionIndex < quizQuestions.length - 1) {
-          console.log('➡️ Moving to next question:', currentQuestionIndex + 1);
           setCurrentQuestionIndex(prev => prev + 1);
         } else {
-          console.log('✅ Quiz completed, navigating to lead capture...');
           // Quiz completado
           setFunnelData(prev => ({
             ...prev,
@@ -86,10 +80,7 @@ const Quiz = () => {
         setShouldAutoAdvance(false);
       }, 800);
       
-      return () => {
-        console.log('🧹 Cleaning up auto-advance timer');
-        clearTimeout(timer);
-      };
+      return () => clearTimeout(timer);
     }
   }, [shouldAutoAdvance, currentQuestionIndex, selectedAnswers, navigate, setFunnelData]);
 
