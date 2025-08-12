@@ -174,8 +174,9 @@ const ThankYou = () => {
               </h3>
             </div>
             <p className="text-stone-600">
-              Hemos enviado toda la información de acceso y recursos a <strong>{funnelData.leadData?.email}</strong>. 
-              Si no lo ves, revisa tu carpeta de spam.
+              Hemos enviado toda la información de acceso a <strong>{funnelData.leadData?.email}</strong>.
+              <br />
+              <strong>¡IMPORTANTE!</strong> También debes unirte al grupo de WhatsApp para recibir el enlace de las sesiones en vivo.
             </p>
           </div>
 
