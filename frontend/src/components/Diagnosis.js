@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
-import { CheckCircle, TrendingUp, Clock, ArrowRight, Download } from 'lucide-react';
+import { CheckCircle, TrendingUp, Clock, ArrowRight } from 'lucide-react';
 import { FunnelContext } from '../App';
 import { diagnosisTemplates, trackEvent } from '../mock';
 
