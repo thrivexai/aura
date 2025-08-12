@@ -129,9 +129,21 @@ const SalesPage = () => {
 
   const personalizedContent = getPersonalizedContent();
 
+  // Mock data para testing cuando no hay datos del funnel
   if (!funnelData.leadData) {
-    navigate('/');
-    return null;
+    // Solo para pruebas - normalmente redirectiría a home
+    const mockFunnelData = {
+      leadData: { name: "María García", email: "maria@test.com" },
+      answers: { 1: "marca-emergente", 3: "fotografia", 4: "reducir-costos" }
+    };
+    
+    // Para desarrollo, usar mock data
+    if (process.env.NODE_ENV === 'development') {
+      console.log("🔧 Usando datos mock para testing de la página de ventas");
+    } else {
+      navigate('/');
+      return null;
+    }
   }
 
   return (
