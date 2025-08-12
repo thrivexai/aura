@@ -1,8 +1,8 @@
 import React, { useContext, useEffect } from 'react';
 import { Button } from './ui/button';
-import { CheckCircle, Calendar, MessageSquare, Download, ArrowRight } from 'lucide-react';
+import { CheckCircle, Calendar, MessageSquare, Download, ArrowRight, Clock } from 'lucide-react';
 import { FunnelContext } from '../App';
-import { trackEvent } from '../mock';
+import { trackEvent, workshopContent } from '../mock';
 
 const ThankYou = () => {
   const { funnelData } = useContext(FunnelContext);
