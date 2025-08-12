@@ -27,6 +27,8 @@ const Quiz = () => {
 
 
   const handleAnswerSelect = (optionId, isMultiSelect = false) => {
+    console.log('🔍 handleAnswerSelect called:', { optionId, isMultiSelect, questionId: currentQuestion.id });
+    
     let newAnswer;
     
     if (isMultiSelect) {
@@ -56,7 +58,10 @@ const Quiz = () => {
 
     // Para preguntas de selección única, activar auto-avance
     if (!isMultiSelect) {
+      console.log('🚀 Activating auto-advance for single-select question');
       setShouldAutoAdvance(true);
+    } else {
+      console.log('⏸️ Multi-select question, no auto-advance');
     }
   };
   // Effect para manejar el auto-avance
