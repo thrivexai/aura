@@ -70,7 +70,8 @@ const ThankYou = () => {
             </h1>
             
             <p className="text-xl text-stone-600 mb-6">
-              Hola {funnelData.leadData?.name}, ya tienes acceso completo al Workshop "Moda Rentable con IA"
+              Hola {funnelData.leadData?.name}, ya tienes acceso confirmado al Workshop "Moda Rentable con IA". 
+              Es un evento EN VIVO que se realizará {workshopContent.schedule.days} a las {workshopContent.schedule.time} {workshopContent.schedule.timezone}.
             </p>
 
             <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-full px-6 py-3">
