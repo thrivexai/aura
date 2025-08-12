@@ -86,7 +86,7 @@ const SalesPage = () => {
     } catch (error) {
       trackEvent('purchase_fail', {
         reason: error.message,
-        lead_email: funnelData.leadData?.email
+        lead_email: leadEmail
       });
     } finally {
       setIsProcessing(false);
