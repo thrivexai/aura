@@ -136,8 +136,8 @@ const SalesPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100">
-      {/* Header con urgencia */}
-      <header className="px-6 py-4 bg-gradient-to-r from-stone-900 to-stone-800 text-white">
+      {/* Header fijo con urgencia */}
+      <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4 bg-gradient-to-r from-stone-900 to-stone-800 text-white shadow-lg">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <img 
@@ -147,7 +147,7 @@ const SalesPage = () => {
             />
             <div>
               <div className="font-semibold">Workshop Moda Rentable con IA</div>
-              <div className="text-stone-300 text-sm">Oferta especial para {leadName}</div>
+              <div className="text-stone-300 text-sm">Evento en vivo • {leadName}</div>
             </div>
           </div>
           <div className="text-center">
@@ -157,7 +157,7 @@ const SalesPage = () => {
         </div>
       </header>
 
-      <main className="px-6 py-12">
+      <main className="px-6 py-12 pt-24">{/* pt-24 para compensar header fijo */}
         <div className="max-w-5xl mx-auto">
           {/* Hero personalizado */}
           <section className="text-center mb-16">
