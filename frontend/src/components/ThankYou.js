@@ -16,11 +16,11 @@ const ThankYou = () => {
 
   const handleJoinCommunity = () => {
     trackEvent('community_join_click', {
-      platform: 'discord',
+      platform: 'whatsapp',
       lead_email: funnelData.leadData?.email
     });
-    // Simular redirección a Discord
-    alert('Te redirigimos a nuestra comunidad de Discord...');
+    // Redirigir a WhatsApp
+    window.open(workshopContent.schedule.whatsappGroup, '_blank');
   };
 
   const handleCalendarAccess = () => {
