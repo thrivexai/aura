@@ -50,10 +50,12 @@ const Quiz = () => {
       newAnswer = optionId;
     }
 
-    setSelectedAnswers(prev => ({
-      ...prev,
+    const newSelectedAnswers = {
+      ...selectedAnswers,
       [currentQuestion.id]: newAnswer
-    }));
+    };
+    
+    setSelectedAnswers(newSelectedAnswers);
 
     trackEvent('quiz_answer', {
       step_index: currentQuestionIndex + 1,
