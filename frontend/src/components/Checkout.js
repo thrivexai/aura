@@ -272,74 +272,29 @@ const SalesPage = () => {
             </div>
           </section>
 
-          {/* Bonos */}
+          {/* Lo que incluye el workshop */}
           <section className="mb-16">
-            <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-8 border border-amber-200">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-200">
               <div className="text-center mb-8">
-                <Gift className="w-16 h-16 mx-auto mb-4 text-amber-600" />
                 <h2 className="text-3xl font-bold text-stone-900 mb-4">
-                  Bonos exclusivos (solo por 48 horas)
+                  🎯 Lo que incluye tu workshop
                 </h2>
+                <p className="text-stone-600">
+                  Evento en vivo • {workshopContent.schedule.days} • {workshopContent.schedule.time} {workshopContent.schedule.timezone}
+                </p>
               </div>
 
               <div className="grid md:grid-cols-2 gap-6">
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-amber-200 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <span className="text-amber-800 font-bold">01</span>
+                {workshopContent.includes.map((item, index) => (
+                  <div key={index} className="flex items-start space-x-4">
+                    <div className="w-12 h-12 bg-blue-200 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <CheckCircle className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-stone-900 mb-2">{item}</h3>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-bold text-stone-900 mb-2">Pack de 50+ Plantillas IA</h3>
-                    <p className="text-stone-600 text-sm mb-2">
-                      Prompts listos para usar en diseño, marketing y producción
-                    </p>
-                    <p className="text-amber-700 font-semibold">Valor: $97</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-amber-200 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <span className="text-amber-800 font-bold">02</span>
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-stone-900 mb-2">Acceso X-Chool (3 meses)</h3>
-                    <p className="text-stone-600 text-sm mb-2">
-                      Comunidad exclusiva + formación continua
-                    </p>
-                    <p className="text-amber-700 font-semibold">Valor: $147</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-amber-200 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <span className="text-amber-800 font-bold">03</span>
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-stone-900 mb-2">Sesión Q&A exclusiva</h3>
-                    <p className="text-stone-600 text-sm mb-2">
-                      1 hora de preguntas y respuestas personalizadas
-                    </p>
-                    <p className="text-amber-700 font-semibold">Valor: $197</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-amber-200 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <span className="text-amber-800 font-bold">04</span>
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-stone-900 mb-2">Checklist de implementación</h3>
-                    <p className="text-stone-600 text-sm mb-2">
-                      Paso a paso para no perderte nada
-                    </p>
-                    <p className="text-amber-700 font-semibold">Valor: $47</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="text-center mt-8">
-                <div className="text-stone-600 mb-2">Valor total de los bonos:</div>
-                <div className="text-3xl font-bold text-amber-700 line-through">$488 USD</div>
-                <div className="text-emerald-600 font-bold text-lg">¡INCLUIDO GRATIS!</div>
+                ))}
               </div>
             </div>
           </section>
