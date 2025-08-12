@@ -358,8 +358,7 @@ const SalesPage = () => {
                 ⚠️ Esta oferta expira en {formatTime(timeLeft)}
               </h3>
               <p className="text-red-700 mb-6">
-                Después de este tiempo, el workshop volverá a su precio regular de $97 USD 
-                y los bonos por valor de $488 USD ya no estarán incluidos.
+                Después de este tiempo, el workshop volverá a su precio regular de $97 USD.
               </p>
               <p className="text-stone-600 text-sm">
                 Solo aceptamos 50 personas en esta promoción para garantizar atención personalizada.
