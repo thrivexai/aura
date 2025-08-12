@@ -89,63 +89,71 @@ const ThankYou = () => {
 
             <div className="space-y-6">
               <div className="flex items-start space-x-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <span className="text-blue-600 font-bold">1</span>
+                <div className="w-10 h-10 bg-gradient-to-br from-green-100 to-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <span className="text-emerald-600 font-bold">1</span>
                 </div>
                 <div className="flex-1">
                   <h3 className="font-semibold text-stone-900 mb-2">
-                    Accede al contenido del workshop
+                    🔥 URGENTE: Únete al grupo de WhatsApp
                   </h3>
                   <p className="text-stone-600 mb-3">
-                    Ya tienes acceso inmediato a todas las 2 horas de contenido práctico.
+                    Recibirás el enlace de conexión para las sesiones en vivo + recordatorios importantes.
                   </p>
                   <Button 
+                    onClick={handleJoinCommunity}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Unirse al grupo de WhatsApp
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-4">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <span className="text-blue-600 font-bold">2</span>
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-stone-900 mb-2">
+                    📅 Agenda las fechas del workshop
+                  </h3>
+                  <div className="bg-blue-50 rounded-lg p-4 mb-3">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Clock className="w-4 h-4 text-blue-600" />
+                      <span className="font-semibold text-blue-900">Horario del Workshop:</span>
+                    </div>
+                    <div className="text-blue-800">
+                      <div>📅 {workshopContent.schedule.days}</div>
+                      <div>🕰️ {workshopContent.schedule.time} {workshopContent.schedule.timezone}</div>
+                      <div>🎥 Evento EN VIVO (no es grabación)</div>
+                    </div>
+                  </div>
+                  <Button 
                     onClick={handleCalendarAccess}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    variant="outline"
+                    className="border-blue-200 text-blue-700 hover:bg-blue-50"
                   >
                     <Calendar className="w-4 h-4 mr-2" />
-                    Acceder al workshop
+                    Agregar a mi calendario
                   </Button>
                 </div>
               </div>
 
               <div className="flex items-start space-x-4">
                 <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <span className="text-purple-600 font-bold">2</span>
+                  <span className="text-purple-600 font-bold">3</span>
                 </div>
                 <div className="flex-1">
                   <h3 className="font-semibold text-stone-900 mb-2">
-                    Únete a la comunidad exclusiva
+                    📚 Descarga los recursos incluidos
                   </h3>
                   <p className="text-stone-600 mb-3">
-                    Conéctate con más de 500 marcas de moda que ya están optimizando con IA.
-                  </p>
-                  <Button 
-                    onClick={handleJoinCommunity}
-                    variant="outline"
-                    className="border-purple-200 text-purple-700 hover:bg-purple-50"
-                  >
-                    <MessageSquare className="w-4 h-4 mr-2" />
-                    Unirse a Discord
-                  </Button>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-amber-100 to-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <span className="text-amber-600 font-bold">3</span>
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-stone-900 mb-2">
-                    Descarga todos los recursos
-                  </h3>
-                  <p className="text-stone-600 mb-3">
-                    Plantillas, checklist y herramientas por valor de $247 USD incluidas.
+                    {workshopContent.includes.join(', ').toLowerCase()}.
                   </p>
                   <Button 
                     onClick={handleDownloadResources}
                     variant="outline"
-                    className="border-amber-200 text-amber-700 hover:bg-amber-50"
+                    className="border-purple-200 text-purple-700 hover:bg-purple-50"
                   >
                     <Download className="w-4 h-4 mr-2" />
                     Descargar recursos
