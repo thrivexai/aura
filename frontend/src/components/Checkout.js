@@ -26,11 +26,15 @@ const SalesPage = () => {
   const [timeLeft, setTimeLeft] = useState(48 * 60 * 60); // 48 horas en segundos
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Obtener datos personalizados basados en las respuestas
-  const bucketId = funnelData.answers?.[3] || 'produccion';
-  const diagnosis = diagnosisTemplates[bucketId] || diagnosisTemplates.produccion;
-  const businessType = funnelData.answers?.[1] || 'marca-emergente';
-  const objective = funnelData.answers?.[4] || 'reducir-costos';
+  // Obtener datos personalizados basados en las respuestas o usar defaults
+  const bucketId = funnelData?.answers?.[3] || 'fotografia';
+  const diagnosis = diagnosisTemplates[bucketId] || diagnosisTemplates.fotografia;
+  const businessType = funnelData?.answers?.[1] || 'marca-emergente';
+  const objective = funnelData?.answers?.[4] || 'reducir-costos';
+  
+  // Datos del lead o datos mock para desarrollo
+  const leadName = funnelData?.leadData?.name || 'María García';
+  const leadEmail = funnelData?.leadData?.email || 'maria@test.com';
 
   useEffect(() => {
     trackEvent('checkout_start', {
