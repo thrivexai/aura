@@ -163,7 +163,7 @@ const SalesPage = () => {
             />
             <div>
               <div className="font-semibold">Workshop Moda Rentable con IA</div>
-              <div className="text-stone-300 text-sm">Oferta especial para {funnelData.leadData.name}</div>
+              <div className="text-stone-300 text-sm">Oferta especial para {leadName}</div>
             </div>
           </div>
           <div className="text-center">
