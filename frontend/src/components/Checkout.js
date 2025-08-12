@@ -2,7 +2,6 @@ import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { Separator } from './ui/separator';
 import { 
   CheckCircle, 
   Clock, 
@@ -12,13 +11,12 @@ import {
   TrendingUp, 
   ArrowRight,
   PlayCircle,
-  Gift,
   Shield,
   Calendar,
   Target
 } from 'lucide-react';
 import { FunnelContext } from '../App';
-import { trackEvent, diagnosisTemplates } from '../mock';
+import { trackEvent, diagnosisTemplates, workshopContent, testimonials } from '../mock';
 
 const SalesPage = () => {
   const navigate = useNavigate();
