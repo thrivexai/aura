@@ -274,7 +274,7 @@ export const mockLeads = [
   {
     id: "1",
     name: "María García",
-    email: "maria@modaboutique.com",
+    email: "maria@lebrel.com",
     whatsapp: "+34 666 777 888",
     businessType: "marca-emergente",
     channels: ["ecommerce", "redes-sociales"],
@@ -288,7 +288,7 @@ export const mockLeads = [
   {
     id: "2", 
     name: "Carlos Mendoza",
-    email: "carlos@luxfashion.mx",
+    email: "carlos@lala.mx",
     whatsapp: "+52 55 1234 5678",
     businessType: "marca-establecida",
     channels: ["tienda-fisica", "ecommerce"],
@@ -302,7 +302,7 @@ export const mockLeads = [
   {
     id: "3",
     name: "Ana Rodríguez", 
-    email: "ana@anapersonal.com",
+    email: "ana@baffi.com",
     whatsapp: "",
     businessType: "diseñador-independiente",
     channels: ["redes-sociales"],
@@ -312,6 +312,31 @@ export const mockLeads = [
     stage: "quiz_step_3",
     createdAt: "2024-01-14T09:15:00Z",
     lastActivity: "2024-01-14T09:22:00Z"
+  }
+];
+
+// Testimonios con marcas reales
+export const testimonials = [
+  {
+    name: "Sofia Martínez",
+    brand: "Lebrel",
+    location: "México",
+    quote: "Reducimos nuestros costos de fotografía en un 78%. Lo que antes nos costaba $2,000 por sesión, ahora lo hacemos por $450 con mejor calidad.",
+    rating: 5
+  },
+  {
+    name: "Carlos Ruiz", 
+    brand: "Lalá",
+    location: "España",
+    quote: "En 3 semanas implementamos todo. Nuestro ROAS subió de 2.1x a 4.7x. Ya recuperamos la inversión 15 veces.",
+    rating: 5
+  },
+  {
+    name: "Ana Rodríguez",
+    brand: "Baffi", 
+    location: "Colombia",
+    quote: "El workshop nos cambió la perspectiva. Ahora producimos el doble de contenido en la mitad del tiempo y con mejor resultado.",
+    rating: 5
   }
 ];
 
