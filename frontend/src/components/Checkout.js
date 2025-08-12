@@ -173,14 +173,13 @@ const SalesPage = () => {
             </h1>
             
             <p className="text-xl text-stone-600 mb-8 max-w-3xl mx-auto leading-relaxed">
-              En 3 sesiones intensivas vas a aprender exactamente cómo {personalizedContent.solution}{' '}
-              y conseguir {personalizedContent.savings} en solo {personalizedContent.timeframe}.
+              {workshopContent.puv}
             </p>
 
             <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-full px-6 py-3 mb-8">
               <TrendingUp className="w-5 h-5 text-emerald-600" />
               <span className="text-emerald-800 font-medium">
-                Más de 500 marcas ya están ahorrando con este método
+                Más de 500 marcas de moda ya están ahorrando con estos métodos
               </span>
             </div>
           </section>
