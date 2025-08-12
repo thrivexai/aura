@@ -202,7 +202,7 @@ const LeadCapture = () => {
                 />
                 <div className="flex-1">
                   <Label htmlFor="consent" className="text-sm text-stone-600 leading-relaxed cursor-pointer">
-                    Acepto recibir mi diagnóstico y contenido relacionado con optimización de moda con IA. 
+                    Acepto recibir mi diagnóstico personalizado y comunicaciones relacionadas. 
                     Puedo darme de baja en cualquier momento.
                   </Label>
                   {errors.consent && (
