@@ -128,17 +128,13 @@ const LeadCapture = () => {
             </h1>
             
             <p className="text-lg text-stone-600 mb-6">
-              Recibe tu análisis personalizado y una plantilla de IA gratuita para empezar a optimizar tu marca hoy mismo.
+              Recibe tu análisis personalizado con recomendaciones específicas para tu marca de moda.
             </p>
 
-            <div className="grid md:grid-cols-2 gap-4 max-w-lg mx-auto">
+            <div className="grid md:grid-cols-1 gap-4 max-w-lg mx-auto">
               <div className="bg-white border border-stone-200 rounded-xl p-4 text-center">
                 <div className="text-amber-600 font-semibold">✨ Diagnóstico</div>
-                <div className="text-sm text-stone-600">Personalizado</div>
-              </div>
-              <div className="bg-white border border-stone-200 rounded-xl p-4 text-center">
-                <div className="text-amber-600 font-semibold">🎁 Plantilla IA</div>
-                <div className="text-sm text-stone-600">Valor $47 USD</div>
+                <div className="text-sm text-stone-600">Personalizado y gratuito</div>
               </div>
             </div>
           </div>
