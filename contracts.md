@@ -9,10 +9,41 @@ Sistema completo de funnel quiz para diagnosticar rentabilidad en negocios de mo
 - ✅ Quiz interactivo de 5 preguntas
 - ✅ Captura de leads con validación
 - ✅ Diagnóstico personalizado
-- ✅ Checkout con simulación de Stripe
+- ✅ **PÁGINA DE VENTAS PERSONALIZADA** - Nueva implementación
 - ✅ Thank you page
 - ✅ Panel de administración completo
 - ✅ Tracking de eventos (simulado)
+- ✅ **Completamente optimizado para móvil**
+
+### 🚀 Nueva Página de Ventas Personalizada
+
+**Reemplaza el checkout simple anterior** con una página de ventas de alta conversión que incluye:
+
+#### 🎯 Personalización Según Quiz:
+- Hero personalizado con el nombre del lead
+- Mensaje específico según el dolor principal identificado
+- Ahorros estimados basados en el bucket del usuario
+- Soluciones específicas para su tipo de negocio
+
+#### 📚 Contenido del Workshop "Moda Rentable con IA":
+- **Día 1: Del Dolor al Deseo** - Identificar fugas de dinero
+- **Día 2: El Plan de Viaje** - Los 3 pilares (Collections, Marketer, Pictures)  
+- **Día 3: El Vehículo** - Presentación de Aura X-Tyle + X-Chool
+
+#### 💰 Elementos de Conversión:
+- Contador regresivo de urgencia (48 horas)
+- Testimonios con resultados específicos
+- 4 bonos exclusivos valorados en $488 USD
+- Precio especial: $15 USD (regular $97 USD)
+- Garantía 30 días
+- Social proof (+500 marcas)
+- Scarcity (solo 50 cupos, quedan 7)
+
+#### 📱 Mobile-First Design:
+- Completamente responsive
+- Botones táctiles optimizados
+- Scroll suave y navegación intuitiva
+- Contenido bien espaciado para lectura móvil
 
 ### 🔧 Datos Actualmente Mockeados (src/mock.js)
 
