@@ -33,14 +33,24 @@ const Quiz = () => {
       } else {
         newAnswer = [...currentAnswers, optionId];
       }
+      
+      setSelectedAnswers(prev => ({
+        ...prev,
+        [currentQuestion.id]: newAnswer
+      }));
     } else {
       newAnswer = optionId;
+      
+      setSelectedAnswers(prev => ({
+        ...prev,
+        [currentQuestion.id]: newAnswer
+      }));
+      
+      // Para preguntas de selección única, pasar automáticamente a la siguiente
+      setTimeout(() => {
+        handleNext();
+      }, 500); // Pequeño delay para mostrar la selección
     }
-
-    setSelectedAnswers(prev => ({
-      ...prev,
-      [currentQuestion.id]: newAnswer
-    }));
 
     trackEvent('quiz_answer', {
       step_index: currentQuestionIndex + 1,
