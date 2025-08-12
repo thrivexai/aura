@@ -212,89 +212,34 @@ const SalesPage = () => {
             </h2>
 
             <div className="grid md:grid-cols-3 gap-8">
-              {/* Día 1 */}
-              <div className="bg-white rounded-2xl p-8 border border-stone-200 shadow-sm hover:shadow-lg transition-all duration-200">
-                <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-red-200 rounded-2xl flex items-center justify-center mb-6">
-                  <Target className="w-8 h-8 text-red-600" />
-                </div>
-                <h3 className="text-xl font-bold text-stone-900 mb-4">
-                  Día 1: Del Dolor al Deseo
-                </h3>
-                <ul className="space-y-3 text-stone-600">
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
-                    <span>Por qué las marcas rentables no son las más grandes</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
-                    <span>Identificar las 5 fugas de dinero más comunes</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
-                    <span>Casos reales de ahorro del 50-70% en costos</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
-                    <span>El mindset de marca rentable vs marca grande</span>
-                  </li>
-                </ul>
-              </div>
+              {workshopContent.days.map((day, index) => {
+                const iconColors = [
+                  "from-red-100 to-red-200 text-red-600",
+                  "from-blue-100 to-blue-200 text-blue-600", 
+                  "from-amber-100 to-amber-200 text-amber-600"
+                ];
+                const icons = [Target, Zap, Users];
+                const IconComponent = icons[index];
 
-              {/* Día 2 */}
-              <div className="bg-white rounded-2xl p-8 border border-stone-200 shadow-sm hover:shadow-lg transition-all duration-200">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center mb-6">
-                  <Zap className="w-8 h-8 text-blue-600" />
-                </div>
-                <h3 className="text-xl font-bold text-stone-900 mb-4">
-                  Día 2: El Plan de Viaje
-                </h3>
-                <ul className="space-y-3 text-stone-600">
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
-                    <span>Caso real: de 3 meses y $5,000 a 2 semanas y $500</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
-                    <span>Los 3 pilares: Collections, Marketer, Pictures</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
-                    <span>Ejemplo en vivo con una prenda real</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
-                    <span>Conceptualización rápida con IA</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Día 3 */}
-              <div className="bg-white rounded-2xl p-8 border border-stone-200 shadow-sm hover:shadow-lg transition-all duration-200">
-                <div className="w-16 h-16 bg-gradient-to-br from-amber-100 to-amber-200 rounded-2xl flex items-center justify-center mb-6">
-                  <Users className="w-8 h-8 text-amber-600" />
-                </div>
-                <h3 className="text-xl font-bold text-stone-900 mb-4">
-                  Día 3: El Vehículo Completo
-                </h3>
-                <ul className="space-y-3 text-stone-600">
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
-                    <span>Presentación de Aura X-Tyle + X-Chool</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
-                    <span>Sistema TMS de publicación y ventas</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
-                    <span>Acceso a comunidad X-Chool</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
-                    <span>Plantillas exclusivas incluidas</span>
-                  </li>
-                </ul>
-              </div>
+                return (
+                  <div key={day.id} className="bg-white rounded-2xl p-8 border border-stone-200 shadow-sm hover:shadow-lg transition-all duration-200">
+                    <div className={`w-16 h-16 bg-gradient-to-br ${iconColors[index]} rounded-2xl flex items-center justify-center mb-6`}>
+                      <IconComponent className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-xl font-bold text-stone-900 mb-4">
+                      {day.title}
+                    </h3>
+                    <ul className="space-y-3 text-stone-600">
+                      {day.content.map((item, itemIndex) => (
+                        <li key={itemIndex} className="flex items-start space-x-2">
+                          <CheckCircle className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
             </div>
           </section>
 
