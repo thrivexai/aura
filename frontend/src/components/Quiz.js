@@ -24,17 +24,7 @@ const Quiz = () => {
     });
   }, [currentQuestionIndex, currentQuestion.id]);
 
-  // Effect para manejar el auto-avance
-  useEffect(() => {
-    if (shouldAutoAdvance) {
-      const timer = setTimeout(() => {
-        handleNext();
-        setShouldAutoAdvance(false);
-      }, 800);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [shouldAutoAdvance]); // eslint-disable-line react-hooks/exhaustive-deps
+
 
   const handleAnswerSelect = (optionId, isMultiSelect = false) => {
     let newAnswer;
