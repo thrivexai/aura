@@ -189,28 +189,44 @@ const Quiz = () => {
             })}
           </div>
 
-          {/* Navigation */}
-          <div className="flex items-center justify-between">
-            <Button
-              variant="outline"
-              onClick={handlePrevious}
-              className="flex items-center space-x-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Anterior</span>
-            </Button>
+          {/* Navigation - Solo mostrar para multi-select */}
+          {currentQuestion.multiSelect && (
+            <div className="flex items-center justify-between">
+              <Button
+                variant="outline"
+                onClick={handlePrevious}
+                className="flex items-center space-x-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Anterior</span>
+              </Button>
 
-            <Button
-              onClick={handleNext}
-              disabled={!isAnswered()}
-              className="bg-stone-900 hover:bg-stone-800 text-white flex items-center space-x-2 disabled:opacity-50"
-            >
-              <span>
-                {currentQuestionIndex === quizQuestions.length - 1 ? 'Finalizar' : 'Siguiente'}
-              </span>
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-          </div>
+              <Button
+                onClick={handleNext}
+                disabled={!isAnswered()}
+                className="bg-stone-900 hover:bg-stone-800 text-white flex items-center space-x-2 disabled:opacity-50"
+              >
+                <span>
+                  {currentQuestionIndex === quizQuestions.length - 1 ? 'Finalizar' : 'Siguiente'}
+                </span>
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+
+          {/* Para preguntas no multi-select, solo mostrar botón anterior si no es la primera */}
+          {!currentQuestion.multiSelect && currentQuestionIndex > 0 && (
+            <div className="flex justify-start">
+              <Button
+                variant="outline"
+                onClick={handlePrevious}
+                className="flex items-center space-x-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Anterior</span>
+              </Button>
+            </div>
+          )}
         </div>
       </main>
     </div>
