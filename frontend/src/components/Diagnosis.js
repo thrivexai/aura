@@ -157,16 +157,6 @@ const Diagnosis = () => {
                 Reservar mi plaza al Workshop ($15)
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
-              
-              <Button
-                onClick={handleDownloadTemplate}
-                variant="outline"
-                size="lg"
-                className="border-white/20 text-white hover:bg-white/10 px-6 py-4 rounded-xl"
-              >
-                <Download className="mr-2 w-4 h-4" />
-                Descargar plantilla gratuita
-              </Button>
             </div>
             
             <div className="mt-6 text-sm text-stone-400">
