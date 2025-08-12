@@ -77,7 +77,7 @@ const SalesPage = () => {
         order_id: `ORDER_${Date.now()}`,
         value: 15,
         currency: 'USD',
-        lead_email: funnelData.leadData?.email,
+        lead_email: leadEmail,
         payment_method: 'checkout'
       });
 
