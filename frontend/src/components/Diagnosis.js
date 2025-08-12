@@ -33,15 +33,6 @@ const Diagnosis = () => {
     navigate('/checkout');
   };
 
-  const handleDownloadTemplate = () => {
-    trackEvent('template_download', {
-      bucket_id: funnelData.answers[3],
-      lead_email: funnelData.leadData?.email
-    });
-    // Simular descarga
-    alert('¡Tu plantilla se ha enviado a tu email!');
-  };
-
   if (!diagnosis || !funnelData.leadData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 flex items-center justify-center">
