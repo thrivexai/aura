@@ -39,7 +39,7 @@ const SalesPage = () => {
   useEffect(() => {
     trackEvent('checkout_start', {
       offer_id: 'workshop-15usd',
-      lead_email: funnelData.leadData?.email,
+      lead_email: leadEmail,
       bucket_id: bucketId
     });
   }, [funnelData, bucketId]);
