@@ -182,7 +182,7 @@ const SalesPage = () => {
             </Badge>
             
             <h1 className="text-4xl lg:text-5xl font-bold text-stone-900 mb-6 leading-tight">
-              {funnelData.leadData.name}, descubriste que{' '}
+              {leadName}, descubriste que{' '}
               <span className="bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent">
                 {personalizedContent.pain}
               </span>
