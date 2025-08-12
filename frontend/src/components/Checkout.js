@@ -303,17 +303,15 @@ const SalesPage = () => {
           <section className="mb-16">
             <div className="bg-gradient-to-r from-stone-900 to-stone-800 rounded-2xl p-8 text-white text-center">
               <h2 className="text-3xl font-bold mb-6">
-                Inversión hoy (solo por 48 horas)
+                Inversión para transformar tu marca
               </h2>
 
               <div className="mb-8">
                 <div className="text-stone-400 mb-2">Precio regular del workshop:</div>
-                <div className="text-2xl text-stone-400 line-through mb-2">$97 USD</div>
-                <div className="text-stone-400 mb-2">Valor con todos los bonos:</div>
-                <div className="text-2xl text-stone-400 line-through mb-4">$585 USD</div>
+                <div className="text-2xl text-stone-400 line-through mb-4">$97 USD</div>
                 
                 <div className="text-6xl font-bold text-amber-400 mb-2">$15</div>
-                <div className="text-stone-300">Un solo pago • Sin recurrencia</div>
+                <div className="text-stone-300">Un solo pago • Sin recurrencia • Acceso inmediato</div>
               </div>
 
               <Button
@@ -329,7 +327,7 @@ const SalesPage = () => {
                   </div>
                 ) : (
                   <div className="flex items-center space-x-2">
-                    <span>SÍ, QUIERO ACCESO INMEDIATO</span>
+                    <span>SÍ, QUIERO ACCESO AL WORKSHOP</span>
                     <ArrowRight className="w-5 h-5" />
                   </div>
                 )}
@@ -342,7 +340,7 @@ const SalesPage = () => {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Calendar className="w-4 h-4" />
-                  <span>Acceso inmediato</span>
+                  <span>Evento en vivo</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Users className="w-4 h-4" />
