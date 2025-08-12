@@ -318,16 +318,16 @@ export const mockLeads = [
 // Testimonios con marcas reales
 export const testimonials = [
   {
-    name: "Sofia Martínez",
+    name: "Carolina de la Torre",
     brand: "Lebrel",
-    location: "México",
+    location: "",
     quote: "Reducimos nuestros costos de fotografía en un 78%. Lo que antes nos costaba $2,000 por sesión, ahora lo hacemos por $450 con mejor calidad.",
     rating: 5
   },
   {
-    name: "Carlos Ruiz", 
+    name: "Laura González", 
     brand: "Lalá",
-    location: "España",
+    location: "",
     quote: "En 3 semanas implementamos todo. Nuestro ROAS subió de 2.1x a 4.7x. Ya recuperamos la inversión 15 veces.",
     rating: 5
   },
