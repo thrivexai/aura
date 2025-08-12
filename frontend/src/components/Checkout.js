@@ -250,43 +250,25 @@ const SalesPage = () => {
             </h2>
 
             <div className="grid md:grid-cols-2 gap-8">
-              <div className="bg-white rounded-2xl p-8 border border-stone-200">
-                <div className="flex items-center space-x-1 mb-4">
-                  {[1,2,3,4,5].map(star => (
-                    <Star key={star} className="w-5 h-5 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                <p className="text-stone-700 mb-4">
-                  "Reducimos nuestros costos de fotografía en un 78%. Lo que antes nos costaba $2,000 
-                  por sesión, ahora lo hacemos por $450 con mejor calidad."
-                </p>
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-stone-200 rounded-full"></div>
-                  <div>
-                    <div className="font-semibold text-stone-900">Sofia Martínez</div>
-                    <div className="text-sm text-stone-600">Marca Emergente, México</div>
+              {testimonials.slice(0, 2).map((testimonial, index) => (
+                <div key={index} className="bg-white rounded-2xl p-8 border border-stone-200">
+                  <div className="flex items-center space-x-1 mb-4">
+                    {[1,2,3,4,5].map(star => (
+                      <Star key={star} className="w-5 h-5 fill-amber-400 text-amber-400" />
+                    ))}
+                  </div>
+                  <p className="text-stone-700 mb-4">
+                    "{testimonial.quote}"
+                  </p>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-stone-200 rounded-full"></div>
+                    <div>
+                      <div className="font-semibold text-stone-900">{testimonial.name}</div>
+                      <div className="text-sm text-stone-600">{testimonial.brand}, {testimonial.location}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              <div className="bg-white rounded-2xl p-8 border border-stone-200">
-                <div className="flex items-center space-x-1 mb-4">
-                  {[1,2,3,4,5].map(star => (
-                    <Star key={star} className="w-5 h-5 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                <p className="text-stone-700 mb-4">
-                  "En 3 semanas implementamos todo. Nuestro ROAS subió de 2.1x a 4.7x. 
-                  Ya recuperamos la inversión 15 veces."
-                </p>
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-stone-200 rounded-full"></div>
-                  <div>
-                    <div className="font-semibold text-stone-900">Carlos Ruiz</div>
-                    <div className="text-sm text-stone-600">Marca Establecida, España</div>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
           </section>
 
