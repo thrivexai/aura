@@ -46,10 +46,10 @@ const Quiz = () => {
         [currentQuestion.id]: newAnswer
       }));
       
-      // Para preguntas de selección única, pasar automáticamente a la siguiente
+      // Para preguntas de selección única, pasar automáticamente después de un momento
       setTimeout(() => {
         handleNext();
-      }, 500); // Pequeño delay para mostrar la selección
+      }, 800); // Aumenté el delay para mejor UX
     }
 
     trackEvent('quiz_answer', {
