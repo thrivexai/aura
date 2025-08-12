@@ -59,6 +59,27 @@ const Quiz = () => {
       setShouldAutoAdvance(true);
     }
   };
+  // Effect para manejar el auto-avance
+  useEffect(() => {
+    if (shouldAutoAdvance) {
+      const timer = setTimeout(() => {
+        if (currentQuestionIndex < quizQuestions.length - 1) {
+          setCurrentQuestionIndex(prev => prev + 1);
+        } else {
+          // Quiz completado
+          setFunnelData(prev => ({
+            ...prev,
+            answers: selectedAnswers,
+            currentStep: 1
+          }));
+          navigate('/lead-capture');
+        }
+        setShouldAutoAdvance(false);
+      }, 800);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [shouldAutoAdvance, currentQuestionIndex, selectedAnswers, navigate, setFunnelData]);
 
   const handleNext = () => {
     const progressPercent = ((currentQuestionIndex + 2) / quizQuestions.length) * 100;
