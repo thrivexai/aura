@@ -264,7 +264,7 @@ const SalesPage = () => {
                     <div className="w-12 h-12 bg-stone-200 rounded-full"></div>
                     <div>
                       <div className="font-semibold text-stone-900">{testimonial.name}</div>
-                      <div className="text-sm text-stone-600">{testimonial.brand}, {testimonial.location}</div>
+                      <div className="text-sm text-stone-600">{testimonial.brand}</div>
                     </div>
                   </div>
                 </div>
