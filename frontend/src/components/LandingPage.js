@@ -121,19 +121,44 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Social Proof */}
+      {/* Social Proof con logos */}
       <section className="px-6 py-16">
         <div className="max-w-4xl mx-auto text-center">
           <h3 className="text-2xl font-semibold text-stone-900 mb-8">
             Marcas que ya están optimizando con IA
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 opacity-60">
-            {['Boutique Elite', 'Moda Luna', 'Style Co.', 'Fashion House'].map((brand, index) => (
-              <div key={index} className="bg-white border border-stone-200 rounded-xl p-4 text-center">
-                <div className="w-12 h-12 bg-stone-200 rounded-lg mx-auto mb-2"></div>
-                <div className="text-sm font-medium text-stone-700">{brand}</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+            <div className="bg-white border border-stone-200 rounded-xl p-6 text-center hover:shadow-lg transition-all duration-200">
+              <img 
+                src="https://customer-assets.emergentagent.com/job_funnel-ai-fashion/artifacts/5n10m5bu_image.png"
+                alt="Lebrel"
+                className="h-12 w-auto mx-auto mb-2 object-contain"
+              />
+              <div className="text-sm font-medium text-stone-700">Lebrel</div>
+            </div>
+            <div className="bg-white border border-stone-200 rounded-xl p-6 text-center hover:shadow-lg transition-all duration-200">
+              <img 
+                src="https://customer-assets.emergentagent.com/job_funnel-ai-fashion/artifacts/a2tm8ozh_image.png"
+                alt="Lalá"
+                className="h-12 w-auto mx-auto mb-2 object-contain"
+              />
+              <div className="text-sm font-medium text-stone-700">Lalá</div>
+            </div>
+            <div className="bg-white border border-stone-200 rounded-xl p-6 text-center hover:shadow-lg transition-all duration-200">
+              <div className="h-12 w-12 bg-stone-200 rounded-lg mx-auto mb-2 flex items-center justify-center">
+                <span className="text-stone-600 font-bold text-lg">B</span>
               </div>
-            ))}
+              <div className="text-sm font-medium text-stone-700">Baffi</div>
+            </div>
+            <div className="bg-white border border-stone-200 rounded-xl p-6 text-center hover:shadow-lg transition-all duration-200">
+              <div className="h-12 w-12 bg-stone-200 rounded-lg mx-auto mb-2 flex items-center justify-center">
+                <span className="text-stone-600 font-bold text-lg">+</span>
+              </div>
+              <div className="text-sm font-medium text-stone-700">497 más</div>
+            </div>
+          </div>
+          <div className="text-stone-600">
+            <strong>Más de 500 marcas de moda</strong> ya están ahorrando en promedio <strong>65% en costos</strong> con estos métodos
           </div>
         </div>
       </section>
