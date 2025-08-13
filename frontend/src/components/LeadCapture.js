@@ -99,8 +99,8 @@ const LeadCapture = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100">
-      {/* Header */}
-      <header className="px-6 py-4 bg-white/80 backdrop-blur-sm border-b border-stone-200">
+      {/* Header fijo */}
+      <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4 bg-white/90 backdrop-blur-sm border-b border-stone-200">
         <div className="max-w-4xl mx-auto flex items-center justify-center">
           <div className="flex items-center space-x-3">
             <img 
@@ -115,7 +115,7 @@ const LeadCapture = () => {
         </div>
       </header>
 
-      <main className="px-6 py-12">
+      <main className="px-6 py-12 pt-24">{/* pt-24 para compensar header fijo */}
         <div className="max-w-2xl mx-auto">
           {/* Hero Section */}
           <div className="text-center mb-12">
