@@ -129,19 +129,15 @@ const LandingPage = () => {
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
             <div className="bg-white border border-stone-200 rounded-xl p-6 text-center hover:shadow-lg transition-all duration-200">
-              <img 
-                src="https://customer-assets.emergentagent.com/job_funnel-ai-fashion/artifacts/5n10m5bu_image.png"
-                alt="Lebrel"
-                className="h-12 w-auto mx-auto mb-2 object-contain"
-              />
+              <div className="h-12 w-12 bg-stone-200 rounded-lg mx-auto mb-2 flex items-center justify-center">
+                <span className="text-stone-600 font-bold text-lg">L</span>
+              </div>
               <div className="text-sm font-medium text-stone-700">Lebrel</div>
             </div>
             <div className="bg-white border border-stone-200 rounded-xl p-6 text-center hover:shadow-lg transition-all duration-200">
-              <img 
-                src="https://customer-assets.emergentagent.com/job_funnel-ai-fashion/artifacts/a2tm8ozh_image.png"
-                alt="Lalá"
-                className="h-12 w-auto mx-auto mb-2 object-contain"
-              />
+              <div className="h-12 w-12 bg-stone-200 rounded-lg mx-auto mb-2 flex items-center justify-center">
+                <span className="text-stone-600 font-bold text-lg">L</span>
+              </div>
               <div className="text-sm font-medium text-stone-700">Lalá</div>
             </div>
             <div className="bg-white border border-stone-200 rounded-xl p-6 text-center hover:shadow-lg transition-all duration-200">
