@@ -154,7 +154,7 @@ const Diagnosis = () => {
                 size="lg"
                 className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-4 text-lg rounded-xl transition-all duration-200 hover:transform hover:scale-105"
               >
-                Reservar mi plaza al Workshop ($15)
+                ¿QUÉ APRENDERÉ EN EL WORKSHOP?
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </div>
