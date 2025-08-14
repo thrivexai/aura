@@ -163,8 +163,22 @@ async def get_purchases():
                 "createdAt": purchase.get("timestamp", datetime.utcnow().isoformat()),
                 "transactionId": purchase.get("transaction_id"),
                 "amount": 15.0,  # Workshop price
+                # Datos de tracking completos
                 "ip": purchase.get("ip_address"),
-                "userAgent": purchase.get("user_agent")
+                "userAgent": purchase.get("user_agent"),
+                "utmSource": purchase.get("utm_params", {}).get("utm_source"),
+                "utmMedium": purchase.get("utm_params", {}).get("utm_medium"),
+                "utmCampaign": purchase.get("utm_params", {}).get("utm_campaign"),
+                "utmContent": purchase.get("utm_params", {}).get("utm_content"),
+                "utmTerm": purchase.get("utm_params", {}).get("utm_term"),
+                # Facebook tracking
+                "fbclid": purchase.get("fbclid"),
+                "_fbc": purchase.get("_fbc"),
+                "_fbp": purchase.get("_fbp"),
+                # Datos adicionales
+                "referrer": purchase.get("referrer"),
+                "currentUrl": purchase.get("current_url"),
+                "sessionId": purchase.get("session_id")
             }
             purchases.append(formatted_purchase)
         
