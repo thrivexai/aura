@@ -445,9 +445,24 @@ const AdminPanel = () => {
                     ))}
                   </div>
                   
-                  {filteredLeads.length === 0 && (
+                  {filteredLeads.length === 0 && !loading && (
                     <div className="text-center py-8 text-stone-500">
-                      No se encontraron leads con los filtros aplicados
+                      {allLeads.length === 0 ? (
+                        <div>
+                          <AlertCircle className="w-12 h-12 mx-auto mb-4 text-stone-400" />
+                          <p>No hay datos disponibles</p>
+                          <p className="text-sm">Los leads aparecerán aquí cuando los usuarios completen el formulario</p>
+                        </div>
+                      ) : (
+                        "No se encontraron leads con los filtros aplicados"
+                      )}
+                    </div>
+                  )}
+                  
+                  {loading && (
+                    <div className="text-center py-8">
+                      <RefreshCw className="w-8 h-8 mx-auto animate-spin text-stone-400 mb-4" />
+                      <p className="text-stone-500">Cargando datos...</p>
                     </div>
                   )}
                 </CardContent>
