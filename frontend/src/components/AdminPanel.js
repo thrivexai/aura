@@ -183,6 +183,10 @@ const AdminPanel = () => {
             </div>
           </div>
           <div className="flex items-center space-x-3">
+            <Button onClick={fetchData} variant="outline" size="sm" disabled={loading}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              {loading ? 'Cargando...' : 'Actualizar'}
+            </Button>
             <Button onClick={exportLeads} variant="outline" size="sm">
               <Download className="w-4 h-4 mr-2" />
               Exportar CSV
