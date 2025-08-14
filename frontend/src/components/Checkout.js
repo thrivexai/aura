@@ -22,7 +22,7 @@ const SalesPage = () => {
   const navigate = useNavigate();
   const { funnelData } = useContext(FunnelContext);
   const [timeLeft, setTimeLeft] = useState(48 * 60 * 60); // 48 horas en segundos
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [hotmartLoaded, setHotmartLoaded] = useState(false);
 
   // Obtener datos personalizados basados en las respuestas o usar defaults
   const bucketId = funnelData?.answers?.[3] || 'fotografia';
@@ -40,7 +40,25 @@ const SalesPage = () => {
       lead_email: leadEmail,
       bucket_id: bucketId
     });
-  }, [funnelData, bucketId]);
+
+    // Cargar el widget de Hotmart
+    const loadHotmart = () => {
+      // Script de Hotmart
+      const script = document.createElement('script');
+      script.src = 'https://static.hotmart.com/checkout/widget.min.js';
+      script.onload = () => setHotmartLoaded(true);
+      document.head.appendChild(script);
+
+      // CSS de Hotmart
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.type = 'text/css';
+      link.href = 'https://static.hotmart.com/css/hotmart-fb.min.css';
+      document.head.appendChild(link);
+    };
+
+    loadHotmart();
+  }, [funnelData, bucketId, leadEmail]);
 
   // Contador regresivo
   useEffect(() => {
