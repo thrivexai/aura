@@ -524,6 +524,110 @@ const AdminPanel = () => {
             </TabsContent>
           </Tabs>
         </div>
+
+        {/* Modal para ver detalles del lead */}
+        {showModal && leadDetails && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-auto m-4">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-stone-900">Detalles del Lead</h2>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setShowModal(false)}
+                  >
+                    ✕
+                  </Button>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-stone-600">Nombre</label>
+                      <p className="text-stone-900">{leadDetails.name}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-stone-600">Email</label>
+                      <p className="text-stone-900">{leadDetails.email}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-stone-600">WhatsApp</label>
+                      <p className="text-stone-900">{leadDetails.whatsapp || 'No proporcionado'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-stone-600">Etapa</label>
+                      <Badge variant={getStageVariant(leadDetails.stage)}>
+                        {getStageLabel(leadDetails.stage)}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-stone-600">Tipo de Negocio</label>
+                      <p className="text-stone-900">{leadDetails.businessType}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-stone-600">Principal Costo</label>
+                      <p className="text-stone-900">{leadDetails.mainCost}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-stone-600">Objetivo</label>
+                      <p className="text-stone-900">{leadDetails.objective}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-stone-600">Uso de IA</label>
+                      <p className="text-stone-900">{leadDetails.aiUsage}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-stone-600">Fecha de Creación</label>
+                      <p className="text-stone-900">{new Date(leadDetails.createdAt).toLocaleString('es-ES')}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-stone-600">IP</label>
+                      <p className="text-stone-900">{leadDetails.ip || 'No disponible'}</p>
+                    </div>
+                  </div>
+
+                  {leadDetails.stage === 'purchased' && leadDetails.transactionId && (
+                    <div>
+                      <label className="text-sm font-medium text-stone-600">ID de Transacción</label>
+                      <p className="text-stone-900 font-mono">{leadDetails.transactionId}</p>
+                    </div>
+                  )}
+
+                  {leadDetails.utmSource && (
+                    <div>
+                      <label className="text-sm font-medium text-stone-600">Parámetros UTM</label>
+                      <div className="text-sm text-stone-700">
+                        {leadDetails.utmSource && <p>Source: {leadDetails.utmSource}</p>}
+                        {leadDetails.utmMedium && <p>Medium: {leadDetails.utmMedium}</p>}
+                        {leadDetails.utmCampaign && <p>Campaign: {leadDetails.utmCampaign}</p>}
+                      </div>
+                    </div>
+                  )}
+
+                  {leadDetails.userAgent && (
+                    <div>
+                      <label className="text-sm font-medium text-stone-600">User Agent</label>
+                      <p className="text-xs text-stone-600 break-all">{leadDetails.userAgent}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
