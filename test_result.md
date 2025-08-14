@@ -240,6 +240,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "Fixed async cursor iteration by changing 'for purchase in purchases_cursor' to 'async for purchase in purchases_cursor'. Endpoint now returns proper JSON with 'purchases' array and 'total' count. Currently returning 1 purchase with proper data structure including transactionId, amount (15.0), stage ('purchased'), etc."
+      - working: true
+        agent: "testing"
+        comment: "VERIFIED EXPANDED TRACKING DATA: Tested updated endpoint with comprehensive tracking fields. All expected fields present: Basic data (name, email, whatsapp, businessType, stage, createdAt), Purchase data (transactionId, amount), Tracking data (ip, userAgent, sessionId), UTM parameters (utmSource, utmMedium, utmCampaign, utmContent, utmTerm), Facebook tracking (fbclid, _fbc, _fbp), Additional data (referrer, currentUrl). Endpoint returns 1 purchase with complete data structure including transaction details."
 
   - task: "GET /api/metrics endpoint"
     implemented: true
