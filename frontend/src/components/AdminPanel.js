@@ -676,22 +676,140 @@ const AdminPanel = () => {
             </TabsContent>
 
             {/* Settings Tab */}
-            <TabsContent value="settings">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Configuración</CardTitle>
-                  <CardDescription>
-                    Ajustes del funnel y integraciones
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8 text-stone-500">
-                    Panel de configuración en desarrollo...
-                    <br />
-                    <small>Próximamente: Integraciones, webhooks, A/B tests</small>
-                  </div>
-                </CardContent>
-              </Card>
+            <TabsContent value="settings" className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Configuración de Webhooks */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Configuración de Webhooks</CardTitle>
+                    <CardDescription>URLs de destino para eventos del funnel</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-stone-700">Webhook Lead Capture</label>
+                      <Input 
+                        value="/api/webhooks/lead-capture" 
+                        disabled 
+                        className="mt-1 font-mono text-xs"
+                      />
+                      <p className="text-xs text-stone-500 mt-1">Se ejecuta cuando un usuario completa el formulario de lead</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-stone-700">Webhook Purchase</label>
+                      <Input 
+                        value="/api/webhooks/purchase" 
+                        disabled 
+                        className="mt-1 font-mono text-xs"
+                      />
+                      <p className="text-xs text-stone-500 mt-1">Se ejecuta cuando se completa una compra</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Configuración de Tracking */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Parámetros de Tracking</CardTitle>
+                    <CardDescription>Datos capturados en cada webhook</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="text-sm">
+                        <strong>Lead Capture incluye:</strong>
+                        <ul className="list-disc list-inside text-xs text-stone-600 mt-1 space-y-1">
+                          <li>Nombre, Email, WhatsApp</li>
+                          <li>Respuestas del quiz</li>
+                          <li>IP del usuario</li>
+                          <li>User Agent</li>
+                          <li>Parámetros UTM (source, medium, campaign)</li>
+                          <li>Facebook tracking (_fbc, _fbp, fbclid)</li>
+                          <li>Session ID único</li>
+                        </ul>
+                      </div>
+                      <div className="text-sm">
+                        <strong>Purchase incluye:</strong>
+                        <ul className="list-disc list-inside text-xs text-stone-600 mt-1 space-y-1">
+                          <li>Todos los datos del lead capture</li>
+                          <li>Transaction ID</li>
+                          <li>Valor de la compra ($15 USD)</li>
+                          <li>Timestamp de la transacción</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Estado de la Base de Datos */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Estado de la Base de Datos</CardTitle>
+                    <CardDescription>Información sobre las colecciones de MongoDB</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center p-3 bg-blue-50 rounded-lg">
+                        <div className="text-2xl font-bold text-blue-600">{leads.length}</div>
+                        <div className="text-sm text-blue-700">Lead Webhooks</div>
+                      </div>
+                      <div className="text-center p-3 bg-green-50 rounded-lg">
+                        <div className="text-2xl font-bold text-green-600">{purchases.length}</div>
+                        <div className="text-sm text-green-700">Purchase Webhooks</div>
+                      </div>
+                    </div>
+                    <div className="text-xs text-stone-500">
+                      <p>Colecciones: lead_webhooks, purchase_webhooks</p>
+                      <p>Última actualización: {new Date().toLocaleString('es-ES')}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Exportación de Datos */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Exportación de Datos</CardTitle>
+                    <CardDescription>Descargar datos para análisis externo</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Button 
+                        onClick={exportLeads} 
+                        variant="outline" 
+                        className="w-full"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Exportar Todos los Leads (CSV)
+                      </Button>
+                      <Button 
+                        onClick={() => {
+                          const csvContent = [
+                            ['Nombre', 'Email', 'WhatsApp', 'Transaction ID', 'Fecha', 'Valor'],
+                            ...purchases.map(purchase => [
+                              purchase.name,
+                              purchase.email,
+                              purchase.whatsapp || 'N/A',
+                              purchase.transactionId || 'N/A',
+                              new Date(purchase.createdAt).toLocaleDateString('es-ES'),
+                              '$15.00'
+                            ])
+                          ].map(row => row.join(',')).join('\n');
+                          
+                          const blob = new Blob([csvContent], { type: 'text/csv' });
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `purchases_aura_${new Date().toISOString().split('T')[0]}.csv`;
+                          a.click();
+                        }} 
+                        variant="outline" 
+                        className="w-full"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Exportar Compras (CSV)
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
           </Tabs>
         </div>
