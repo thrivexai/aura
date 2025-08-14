@@ -447,7 +447,11 @@ const AdminPanel = () => {
                           </div>
                           
                           <div className="text-right">
-                            <Button variant="outline" size="sm">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => viewLeadDetails(lead)}
+                            >
                               <Eye className="w-4 h-4 mr-1" />
                               Ver detalle
                             </Button>
