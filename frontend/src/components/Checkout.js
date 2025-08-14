@@ -139,27 +139,77 @@ const SalesPage = () => {
 
   // Listener para detectar cuando se completa el pago en Hotmart
   useEffect(() => {
-    const handleMessage = (event) => {
+    const handleMessage = async (event) => {
       // Hotmart envía mensajes cuando se completa el pago
       if (event.origin === 'https://pay.hotmart.com' || event.origin === 'https://static.hotmart.com') {
-        if (event.data && event.data.type === 'HOTMART_PURCHASE_SUCCESS') {
+        if (event.data && (
+          event.data.type === 'HOTMART_PURCHASE_SUCCESS' || 
+          event.data.type === 'purchase' ||
+          event.data.status === 'success'
+        )) {
+          const purchaseData = {
+            transactionId: event.data.transaction_id || event.data.transactionId || `ORDER_${Date.now()}`,
+            orderId: event.data.order_id || event.data.orderId,
+            status: 'completed',
+            paymentMethod: 'hotmart',
+            ...event.data
+          };
+
+          // Enviar webhook de compra
+          const webhookResult = await sendPurchaseWebhook(
+            { name: leadName, email: leadEmail, whatsapp: funnelData?.leadData?.whatsapp },
+            purchaseData
+          );
+
+          if (webhookResult.success) {
+            console.log('✅ Purchase webhook enviado exitosamente:', webhookResult.data);
+          } else {
+            console.error('⚠️ Error en purchase webhook:', webhookResult.error);
+          }
+
           trackEvent('purchase_success', {
-            order_id: event.data.transaction_id || `ORDER_${Date.now()}`,
+            order_id: purchaseData.transactionId,
             value: 15,
             currency: 'USD',
             lead_email: leadEmail,
-            payment_method: 'hotmart'
+            payment_method: 'hotmart',
+            webhook_sent: webhookResult.success
           });
           
           // Redirigir a página de gracias
-          navigate('/thank-you');
+          setTimeout(() => {
+            navigate('/thank-you');
+          }, 1000); // Pequeño delay para asegurar que el webhook se envíe
         }
       }
     };
 
+    // También escuchar eventos de la página para casos especiales
+    const handleHotmartCallback = async (customEvent) => {
+      if (customEvent.detail && customEvent.detail.purchase_success) {
+        const purchaseData = customEvent.detail;
+        
+        const webhookResult = await sendPurchaseWebhook(
+          { name: leadName, email: leadEmail, whatsapp: funnelData?.leadData?.whatsapp },
+          purchaseData
+        );
+
+        if (webhookResult.success) {
+          console.log('✅ Purchase webhook enviado (callback):', webhookResult.data);
+        }
+
+        navigate('/thank-you');
+      }
+    };
+
     window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [navigate, leadEmail]);
+    window.addEventListener('hotmart_purchase_success', handleHotmartCallback);
+    
+    return () => {
+      window.removeEventListener('message', handleMessage);
+      window.removeEventListener('hotmart_purchase_success', handleHotmartCallback);
+    };
+  }, [navigate, leadEmail, leadName, funnelData]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100">
