@@ -316,24 +316,32 @@ const SalesPage = () => {
                 <div className="text-stone-300">Un solo pago • Sin recurrencia • Acceso inmediato</div>
               </div>
 
-              <Button
-                onClick={handlePurchase}
-                disabled={isProcessing}
-                size="lg"
-                className="bg-amber-600 hover:bg-amber-700 text-white px-12 py-4 text-xl rounded-xl mb-6 transition-all duration-200 hover:transform hover:scale-105 shadow-2xl"
-              >
-                {isProcessing ? (
+              {hotmartLoaded ? (
+                <a 
+                  href="https://pay.hotmart.com/B101346536X?checkoutMode=2" 
+                  className="hotmart-fb hotmart__button-checkout inline-block w-full"
+                  onClick={handleHotmartClick}
+                  style={{ textDecoration: 'none' }}
+                >
+                  <div className="bg-amber-600 hover:bg-amber-700 text-white px-12 py-4 text-xl rounded-xl transition-all duration-200 hover:transform hover:scale-105 shadow-2xl text-center font-semibold">
+                    SÍ, QUIERO ACCESO AL WORKSHOP
+                    <div className="inline-block ml-2">
+                      <ArrowRight className="w-5 h-5 inline" />
+                    </div>
+                  </div>
+                </a>
+              ) : (
+                <Button
+                  disabled
+                  size="lg"
+                  className="bg-stone-400 text-white px-12 py-4 text-xl rounded-xl mb-6"
+                >
                   <div className="flex items-center space-x-2">
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Procesando...</span>
+                    <span>Cargando pago seguro...</span>
                   </div>
-                ) : (
-                  <div className="flex items-center space-x-2">
-                    <span>SÍ, QUIERO ACCESO AL WORKSHOP</span>
-                    <ArrowRight className="w-5 h-5" />
-                  </div>
-                )}
-              </Button>
+                </Button>
+              )}
 
               <div className="flex items-center justify-center space-x-8 text-sm text-stone-400">
                 <div className="flex items-center space-x-2">
