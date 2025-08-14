@@ -44,7 +44,19 @@ const AdminPanel = () => {
     dateRange: '7d'
   });
 
+  const [leadDetails, setLeadDetails] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+
   const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+
+  const viewLeadDetails = (lead) => {
+    setLeadDetails(lead);
+    setShowModal(true);
+    trackEvent('admin_view_lead_details', {
+      lead_id: lead.id,
+      lead_stage: lead.stage
+    });
+  };
 
   const fetchData = async () => {
     setLoading(true);
