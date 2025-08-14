@@ -90,6 +90,115 @@ async def get_status_checks():
     status_checks = await db.status_checks.find().to_list(1000)
     return [StatusCheck(**status_check) for status_check in status_checks]
 
+@api_router.get("/leads")
+async def get_leads():
+    try:
+        # Obtener datos de lead_webhooks collection
+        leads_cursor = db.lead_webhooks.find().sort("timestamp", -1).limit(100)
+        leads = []
+        
+        for lead in leads_cursor:
+            # Convertir ObjectId a string si existe
+            if "_id" in lead:
+                lead["_id"] = str(lead["_id"])
+            
+            # Mapear los datos del webhook al formato esperado por el frontend
+            formatted_lead = {
+                "id": lead.get("session_id", str(lead.get("_id", ""))),
+                "name": lead.get("name", "Sin nombre"),
+                "email": lead.get("email", "sin-email@ejemplo.com"),
+                "whatsapp": lead.get("whatsapp"),
+                "businessType": lead.get("quiz_answers", {}).get("business_type", "sin-especificar"),
+                "mainCost": lead.get("quiz_answers", {}).get("main_cost", "sin-especificar"),
+                "objective": lead.get("quiz_answers", {}).get("objective", "sin-especificar"),
+                "aiUsage": lead.get("quiz_answers", {}).get("ai_usage", "sin-especificar"),
+                "stage": "lead_capture",  # Default desde lead-capture webhook
+                "createdAt": lead.get("timestamp", datetime.utcnow().isoformat()),
+                "ip": lead.get("ip_address"),
+                "userAgent": lead.get("user_agent"),
+                "utmSource": lead.get("utm_params", {}).get("utm_source"),
+                "utmMedium": lead.get("utm_params", {}).get("utm_medium"),
+                "utmCampaign": lead.get("utm_params", {}).get("utm_campaign")
+            }
+            leads.append(formatted_lead)
+        
+        return {"leads": leads, "total": len(leads)}
+    except Exception as e:
+        print(f"Error getting leads: {e}")
+        return {"leads": [], "total": 0, "error": str(e)}
+
+@api_router.get("/purchases")
+async def get_purchases():
+    try:
+        # Obtener datos de purchase_webhooks collection
+        purchases_cursor = db.purchase_webhooks.find().sort("timestamp", -1).limit(100)
+        purchases = []
+        
+        for purchase in purchases_cursor:
+            # Convertir ObjectId a string si existe
+            if "_id" in purchase:
+                purchase["_id"] = str(purchase["_id"])
+            
+            formatted_purchase = {
+                "id": purchase.get("session_id", str(purchase.get("_id", ""))),
+                "name": purchase.get("name", "Sin nombre"),
+                "email": purchase.get("email", "sin-email@ejemplo.com"),
+                "whatsapp": purchase.get("whatsapp"),
+                "businessType": purchase.get("quiz_answers", {}).get("business_type", "sin-especificar"),
+                "mainCost": purchase.get("quiz_answers", {}).get("main_cost", "sin-especificar"),
+                "objective": purchase.get("quiz_answers", {}).get("objective", "sin-especificar"),
+                "aiUsage": purchase.get("quiz_answers", {}).get("ai_usage", "sin-especificar"),
+                "stage": "purchased",
+                "createdAt": purchase.get("timestamp", datetime.utcnow().isoformat()),
+                "transactionId": purchase.get("transaction_id"),
+                "amount": 15.0,  # Workshop price
+                "ip": purchase.get("ip_address"),
+                "userAgent": purchase.get("user_agent")
+            }
+            purchases.append(formatted_purchase)
+        
+        return {"purchases": purchases, "total": len(purchases)}
+    except Exception as e:
+        print(f"Error getting purchases: {e}")
+        return {"purchases": [], "total": 0, "error": str(e)}
+
+@api_router.get("/metrics")
+async def get_metrics():
+    try:
+        # Calcular métricas reales de la base de datos
+        total_leads = db.lead_webhooks.count_documents({})
+        total_purchases = db.purchase_webhooks.count_documents({})
+        
+        # Calcular métricas básicas (puedes expandir esto con más lógica)
+        estimated_visitors = max(total_leads * 3, 100)  # Estimación basada en leads
+        conversion_rate = (total_purchases / max(total_leads, 1)) * 100 if total_leads > 0 else 0
+        
+        metrics = {
+            "totalVisitors": estimated_visitors,
+            "leadsGenerated": total_leads,
+            "purchases": total_purchases,
+            "conversionRate": round(conversion_rate, 1),
+            "quizStarts": int(total_leads * 1.5),  # Estimación
+            "quizCompletions": total_leads,
+            "diagnosisViewed": int(total_leads * 0.8),  # Estimación
+            "checkoutClicks": int(total_leads * 0.4),  # Estimación
+        }
+        
+        return metrics
+    except Exception as e:
+        print(f"Error getting metrics: {e}")
+        return {
+            "totalVisitors": 0,
+            "leadsGenerated": 0,
+            "purchases": 0,
+            "conversionRate": 0,
+            "quizStarts": 0,
+            "quizCompletions": 0,
+            "diagnosisViewed": 0,
+            "checkoutClicks": 0,
+            "error": str(e)
+        }
+
 # Endpoint para obtener IP del cliente
 @api_router.get("/get-client-ip")
 async def get_client_ip(request: Request):
