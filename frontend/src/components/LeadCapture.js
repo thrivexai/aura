@@ -73,7 +73,7 @@ const LeadCapture = () => {
 
     try {
       // Simular envío a backend
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Guardar datos del lead en el contexto
       setFunnelData(prev => ({
@@ -82,10 +82,20 @@ const LeadCapture = () => {
         currentStep: 2
       }));
 
+      // Enviar webhook con todos los datos para Facebook/Meta tracking
+      const webhookResult = await sendLeadCaptureWebhook(formData, funnelData.answers);
+      
+      if (webhookResult.success) {
+        console.log('✅ Webhook enviado exitosamente:', webhookResult.data);
+      } else {
+        console.error('⚠️ Error en webhook:', webhookResult.error);
+      }
+
       trackEvent('lead_submitted', {
         success: true,
         has_whatsapp: Boolean(formData.whatsapp),
-        quiz_answers_count: Object.keys(funnelData.answers).length
+        quiz_answers_count: Object.keys(funnelData.answers).length,
+        webhook_sent: webhookResult.success
       });
 
       navigate('/diagnosis');
