@@ -97,7 +97,7 @@ async def get_leads():
         leads_cursor = db.lead_webhooks.find().sort("timestamp", -1).limit(100)
         leads = []
         
-        for lead in leads_cursor:
+        async for lead in leads_cursor:
             # Convertir ObjectId a string si existe
             if "_id" in lead:
                 lead["_id"] = str(lead["_id"])
