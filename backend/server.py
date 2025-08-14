@@ -339,7 +339,7 @@ async def export_purchases_csv():
                 quiz_answers.get("main_cost", "N/A"),
                 quiz_answers.get("objective", "N/A"),
                 quiz_answers.get("ai_usage", "N/A"),
-                purchase.get("client_ip", "N/A"),
+                purchase.get("ip_address", "N/A"),
                 purchase.get("user_agent", "N/A"),
                 purchase.get("session_id", "N/A"),
                 utm_params.get("utm_source", "N/A"),
