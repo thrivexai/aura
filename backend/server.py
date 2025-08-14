@@ -225,6 +225,150 @@ async def get_metrics():
             "error": str(e)
         }
 
+@api_router.get("/export-leads-csv")
+async def export_leads_csv():
+    """Export all leads data to CSV format"""
+    try:
+        import csv
+        from io import StringIO
+        
+        # Get all lead data from MongoDB
+        leads_cursor = db.lead_webhooks.find().sort("timestamp", -1)
+        
+        # Create CSV content
+        output = StringIO()
+        writer = csv.writer(output)
+        
+        # Write headers
+        headers = [
+            'Nombre', 'Email', 'WhatsApp', 'Tipo Negocio', 'Costo Principal', 'Objetivo', 'Uso IA', 'Etapa', 'Fecha Creacion',
+            'IP', 'User Agent', 'Session ID', 'Referrer', 'URL Actual',
+            'UTM Source', 'UTM Medium', 'UTM Campaign', 'UTM Content', 'UTM Term',
+            'fbclid', '_fbc', '_fbp',
+            'Transaction ID', 'Valor', 'Moneda', 'Timestamp Completo'
+        ]
+        writer.writerow(headers)
+        
+        # Write data rows
+        async for lead in leads_cursor:
+            quiz_answers = lead.get("quiz_answers", {})
+            utm_params = lead.get("utm_params", {})
+            
+            row = [
+                lead.get("name", ""),
+                lead.get("email", ""),
+                lead.get("whatsapp", "N/A"),
+                quiz_answers.get("business_type", "N/A"),
+                quiz_answers.get("main_cost", "N/A"),
+                quiz_answers.get("objective", "N/A"),
+                quiz_answers.get("ai_usage", "N/A"),
+                "Captura de Lead",
+                lead.get("timestamp", "N/A"),
+                lead.get("client_ip", "N/A"),
+                lead.get("user_agent", "N/A"),
+                lead.get("session_id", "N/A"),
+                lead.get("referrer", "N/A"),
+                lead.get("current_url", "N/A"),
+                utm_params.get("utm_source", "N/A"),
+                utm_params.get("utm_medium", "N/A"),
+                utm_params.get("utm_campaign", "N/A"),
+                utm_params.get("utm_content", "N/A"),
+                utm_params.get("utm_term", "N/A"),
+                lead.get("fbclid", "N/A"),
+                lead.get("_fbc", "N/A"),
+                lead.get("_fbp", "N/A"),
+                "N/A",  # Transaction ID
+                "N/A",  # Valor
+                "N/A",  # Moneda
+                lead.get("timestamp", "N/A")
+            ]
+            writer.writerow(row)
+        
+        csv_content = output.getvalue()
+        output.close()
+        
+        return Response(
+            content=csv_content,
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=leads_completo.csv"}
+        )
+        
+    except Exception as e:
+        print(f"Error exporting leads CSV: {e}")
+        return {"error": str(e)}
+
+@api_router.get("/export-purchases-csv")
+async def export_purchases_csv():
+    """Export all purchases data to CSV format"""
+    try:
+        import csv
+        from io import StringIO
+        
+        # Get all purchase data from MongoDB
+        purchases_cursor = db.purchase_webhooks.find().sort("timestamp", -1)
+        
+        # Create CSV content
+        output = StringIO()
+        writer = csv.writer(output)
+        
+        # Write headers
+        headers = [
+            'Nombre', 'Email', 'WhatsApp', 'Transaction ID', 'Fecha', 'Valor', 'Moneda',
+            'Tipo Negocio', 'Costo Principal', 'Objetivo', 'Uso IA',
+            'IP', 'User Agent', 'Session ID',
+            'UTM Source', 'UTM Medium', 'UTM Campaign', 'UTM Content', 'UTM Term',
+            'fbclid', '_fbc', '_fbp',
+            'Referrer', 'URL Actual', 'Timestamp Completo'
+        ]
+        writer.writerow(headers)
+        
+        # Write data rows
+        async for purchase in purchases_cursor:
+            quiz_answers = purchase.get("quiz_answers", {})
+            utm_params = purchase.get("utm_params", {})
+            
+            row = [
+                purchase.get("name", ""),
+                purchase.get("email", ""),
+                purchase.get("whatsapp", "N/A"),
+                purchase.get("transaction_id", "N/A"),
+                purchase.get("timestamp", "N/A"),
+                "$15.00",
+                "USD",
+                quiz_answers.get("business_type", "N/A"),
+                quiz_answers.get("main_cost", "N/A"),
+                quiz_answers.get("objective", "N/A"),
+                quiz_answers.get("ai_usage", "N/A"),
+                purchase.get("client_ip", "N/A"),
+                purchase.get("user_agent", "N/A"),
+                purchase.get("session_id", "N/A"),
+                utm_params.get("utm_source", "N/A"),
+                utm_params.get("utm_medium", "N/A"),
+                utm_params.get("utm_campaign", "N/A"),
+                utm_params.get("utm_content", "N/A"),
+                utm_params.get("utm_term", "N/A"),
+                purchase.get("fbclid", "N/A"),
+                purchase.get("_fbc", "N/A"),
+                purchase.get("_fbp", "N/A"),
+                purchase.get("referrer", "N/A"),
+                purchase.get("current_url", "N/A"),
+                purchase.get("timestamp", "N/A")
+            ]
+            writer.writerow(row)
+        
+        csv_content = output.getvalue()
+        output.close()
+        
+        return Response(
+            content=csv_content,
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=purchases_completo.csv"}
+        )
+        
+    except Exception as e:
+        print(f"Error exporting purchases CSV: {e}")
+        return {"error": str(e)}
+
 # Endpoint para obtener IP del cliente
 @api_router.get("/get-client-ip")
 async def get_client_ip(request: Request):
