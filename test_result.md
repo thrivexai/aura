@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "no puedo ver al panel admin" - Usuario reporta que no puede acceder al panel administrativo
+user_problem_statement: "sale este error antes de pasar a lapagina de vetnas, el boton ver detalles en el admin no sirve de nada. necesito ver en que etapa quedo cada lead., analitycs y confuguracion no hacen nada... deben ser 100% funcionales. endonde veo esto (Al momento de que el usuario envíe el formulario se debe enviar esas informaciones junto con algunas otras a un webhook: Nombre, Correo, WhatsApp, IP, fbclid, _fbc, _fbp, user agent (Cualquier otra cosa que sea relevante para marcar eventos como initiatecheckout). Ahora bien después de realizar la compra necesitamos recibir esos datos en otro webhook para marcar purchase.) y no quiero que apareza la marca de agua de emergent 'made With emergent'"
 
 frontend:
   - task: "Admin Panel Data Integration"
