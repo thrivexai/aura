@@ -36,6 +36,44 @@ class StatusCheck(BaseModel):
 class StatusCheckCreate(BaseModel):
     client_name: str
 
+class LeadCaptureWebhook(BaseModel):
+    name: str
+    email: str
+    whatsapp: Optional[str] = None
+    userAgent: Optional[str] = None
+    fbclid: Optional[str] = None
+    _fbc: Optional[str] = None
+    _fbp: Optional[str] = None
+    utmSource: Optional[str] = None
+    utmMedium: Optional[str] = None
+    utmCampaign: Optional[str] = None
+    utmContent: Optional[str] = None
+    utmTerm: Optional[str] = None
+    referrer: Optional[str] = None
+    quizAnswers: Optional[Dict[str, Any]] = None
+    bucketId: Optional[str] = None
+    eventType: str = "InitiateCheckout"
+    value: float = 15.0
+    currency: str = "USD"
+
+class PurchaseWebhook(BaseModel):
+    name: str
+    email: str
+    whatsapp: Optional[str] = None
+    transactionId: str
+    orderId: Optional[str] = None
+    userAgent: Optional[str] = None
+    fbclid: Optional[str] = None
+    _fbc: Optional[str] = None
+    _fbp: Optional[str] = None
+    utmSource: Optional[str] = None
+    utmMedium: Optional[str] = None
+    utmCampaign: Optional[str] = None
+    eventType: str = "Purchase"
+    value: float = 15.0
+    currency: str = "USD"
+    paymentMethod: str = "hotmart"
+
 # Add your routes to the router instead of directly to app
 @api_router.get("/")
 async def root():
