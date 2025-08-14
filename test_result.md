@@ -298,7 +298,7 @@ test_plan:
 
 agent_communication:
   - agent: "main"
-    message: "Usuario reportó múltiples problemas críticos en el admin panel y checkout. TODOS SOLUCIONADOS: 1) Error JavaScript en checkout corregido con manejo robusto de errores, 2) Botón 'Ver detalles' ahora funcional con modal completo, 3) Analytics completamente implementado con dashboards reales, 4) Configuración funcional mostrando webhooks y estado, 5) Tracking de etapas mejorado, 6) Marca de agua Emergent eliminada. Webhooks ya incluían todos los datos requeridos (IP, fbclid, _fbc, _fbp, user agent, UTM params)."
+    message: "PROBLEMA CRÍTICO DE CSV RESUELTO: Usuario reportó que exportación CSV mostraba todos datos como N/A. Investigación con troubleshoot_agent reveló que webhooks funcionaban perfectamente pero NO EXISTÍA funcionalidad de exportación CSV real. SOLUCIONADO: Implementados endpoints backend reales /api/export-leads-csv y /api/export-purchases-csv que extraen datos directamente de MongoDB, y frontend actualizado para usarlos. Backend testing confirma CSV ahora incluye datos reales de tracking (IP, UTM, Facebook tracking, Transaction IDs) en lugar de N/A."
   - agent: "testing"
     message: "Tested new admin panel API endpoints (/api/leads, /api/purchases, /api/metrics). Found and fixed critical async MongoDB cursor issues. All endpoints now working correctly with proper JSON responses. Fixed: AsyncIOMotorCursor iteration and async count_documents operations. All endpoints return expected data structures and handle empty database gracefully."
   - agent: "testing"
