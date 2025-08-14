@@ -264,7 +264,7 @@ async def export_leads_csv():
                 quiz_answers.get("ai_usage", "N/A"),
                 "Captura de Lead",
                 lead.get("timestamp", "N/A"),
-                lead.get("client_ip", "N/A"),
+                lead.get("ip_address", "N/A"),
                 lead.get("user_agent", "N/A"),
                 lead.get("session_id", "N/A"),
                 lead.get("referrer", "N/A"),
