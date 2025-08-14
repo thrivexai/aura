@@ -776,66 +776,23 @@ const AdminPanel = () => {
                         Exportar Todos los Leads Completo (CSV)
                       </Button>
                       <Button 
-                        onClick={() => {
-                          const purchaseLeads = allLeads.filter(lead => lead.stage === 'purchased');
-                          
-                          const csvContent = [
-                            [
-                              // Datos básicos
-                              'Nombre', 'Email', 'WhatsApp', 'Transaction ID', 'Fecha', 'Valor', 'Moneda',
-                              // Datos del quiz
-                              'Tipo Negocio', 'Costo Principal', 'Objetivo', 'Uso IA',
-                              // Datos de tracking
-                              'IP', 'User Agent', 'Session ID',
-                              // UTM Parameters
-                              'UTM Source', 'UTM Medium', 'UTM Campaign', 'UTM Content', 'UTM Term',
-                              // Facebook Tracking
-                              'fbclid', '_fbc', '_fbp',
-                              // Datos adicionales
-                              'Referrer', 'URL Actual', 'Timestamp Completo'
-                            ],
-                            ...purchaseLeads.map(purchase => [
-                              // Datos básicos
-                              purchase.name || '',
-                              purchase.email || '',
-                              purchase.whatsapp || 'N/A',
-                              purchase.transactionId || 'N/A',
-                              new Date(purchase.createdAt).toLocaleDateString('es-ES'),
-                              '$15.00',
-                              'USD',
-                              // Datos del quiz
-                              purchase.businessType || '',
-                              purchase.mainCost || '',
-                              purchase.objective || '',
-                              purchase.aiUsage || '',
-                              // Datos de tracking
-                              purchase.ip || 'N/A',
-                              purchase.userAgent || 'N/A',
-                              purchase.id || 'N/A',
-                              // UTM Parameters
-                              purchase.utmSource || 'N/A',
-                              purchase.utmMedium || 'N/A',
-                              purchase.utmCampaign || 'N/A',
-                              purchase.utmContent || 'N/A',
-                              purchase.utmTerm || 'N/A',
-                              // Facebook Tracking
-                              purchase.fbclid || 'N/A',
-                              purchase._fbc || 'N/A',
-                              purchase._fbp || 'N/A',
-                              // Datos adicionales
-                              purchase.referrer || 'N/A',
-                              purchase.currentUrl || 'N/A',
-                              purchase.createdAt || 'N/A'
-                            ])
-                          ].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
-                          
-                          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                          const url = window.URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = `compras_completo_aura_${new Date().toISOString().split('T')[0]}.csv`;
-                          a.click();
-                          window.URL.revokeObjectURL(url);
+                        onClick={async () => {
+                          try {
+                            const response = await fetch(`${backendUrl}/api/export-purchases-csv`);
+                            if (response.ok) {
+                              const blob = await response.blob();
+                              const url = window.URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = `compras_completo_aura_${new Date().toISOString().split('T')[0]}.csv`;
+                              a.click();
+                              window.URL.revokeObjectURL(url);
+                            } else {
+                              console.error('Error downloading purchases CSV:', response.statusText);
+                            }
+                          } catch (error) {
+                            console.error('Error exporting purchases:', error);
+                          }
                         }} 
                         variant="outline" 
                         className="w-full"
