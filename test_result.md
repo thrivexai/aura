@@ -180,20 +180,20 @@ frontend:
         agent: "main"
         comment: "SOLUCIONADO: Mejorado sistema de etapas con badges de colores y labels claros. Modal de detalles muestra etapa actual de cada lead"
 
-  - task: "CSV Export with Complete Tracking Data"
-    implemented: true
+  - task: "Remove Emergent Watermark"
+    implemented: true  
     working: true
-    file: "components/AdminPanel.js"
+    file: "public/index.html"
     stuck_count: 0
-    priority: "high"
+    priority: "medium"
     needs_retesting: true
     status_history:
       - working: false
         agent: "main"
-        comment: "Usuario reporta que los datos a exportar deben mostrar todos los datos del tracking, no solo datos básicos"
+        comment: "Usuario reporta marca de agua 'Made with Emergent' visible"
       - working: true
         agent: "main"
-        comment: "SOLUCIONADO: Actualizada función de exportación CSV para incluir TODOS los datos de tracking: IP, User Agent, Session ID, UTM parameters (source, medium, campaign, content, term), Facebook tracking (fbclid, _fbc, _fbp), referrer, URL actual, timestamp completo. Backend actualizado para mapear todos los campos de tracking."
+        comment: "SOLUCIONADO: Eliminada marca de agua de /app/frontend/public/index.html y actualizado título y descripción del HTML"
 
 backend:
   - task: "AdminPanel API Routes"
