@@ -130,6 +130,51 @@ backend:
         agent: "main"
         comment: "Backend funcionando correctamente, servicios activos (frontend, backend, mongodb)"
 
+  - task: "GET /api/leads endpoint"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "Initial test failed due to AsyncIOMotorCursor iteration issue - 'AsyncIOMotorCursor' object is not iterable"
+      - working: true
+        agent: "testing"
+        comment: "Fixed async cursor iteration by changing 'for lead in leads_cursor' to 'async for lead in leads_cursor'. Endpoint now returns proper JSON with 'leads' array and 'total' count. Currently returning 2 leads with proper data structure including id, name, email, whatsapp, businessType, stage, createdAt, etc."
+
+  - task: "GET /api/purchases endpoint"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "Initial test failed due to AsyncIOMotorCursor iteration issue - 'AsyncIOMotorCursor' object is not iterable"
+      - working: true
+        agent: "testing"
+        comment: "Fixed async cursor iteration by changing 'for purchase in purchases_cursor' to 'async for purchase in purchases_cursor'. Endpoint now returns proper JSON with 'purchases' array and 'total' count. Currently returning 1 purchase with proper data structure including transactionId, amount (15.0), stage ('purchased'), etc."
+
+  - task: "GET /api/metrics endpoint"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "Initial test failed due to async operation issue - unsupported operand type(s) for *: '_asyncio.Future' and 'int'"
+      - working: true
+        agent: "testing"
+        comment: "Fixed async database operations by adding 'await' to count_documents() calls. Endpoint now returns proper metrics: totalVisitors: 100, leadsGenerated: 2, purchases: 1, conversionRate: 50.0, plus additional calculated metrics (quizStarts, quizCompletions, diagnosisViewed, checkoutClicks)"
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
