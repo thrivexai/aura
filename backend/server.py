@@ -114,11 +114,22 @@ async def get_leads():
                 "aiUsage": lead.get("quiz_answers", {}).get("ai_usage", "sin-especificar"),
                 "stage": "lead_capture",  # Default desde lead-capture webhook
                 "createdAt": lead.get("timestamp", datetime.utcnow().isoformat()),
+                # Datos de tracking completos
                 "ip": lead.get("ip_address"),
                 "userAgent": lead.get("user_agent"),
                 "utmSource": lead.get("utm_params", {}).get("utm_source"),
                 "utmMedium": lead.get("utm_params", {}).get("utm_medium"),
-                "utmCampaign": lead.get("utm_params", {}).get("utm_campaign")
+                "utmCampaign": lead.get("utm_params", {}).get("utm_campaign"),
+                "utmContent": lead.get("utm_params", {}).get("utm_content"),
+                "utmTerm": lead.get("utm_params", {}).get("utm_term"),
+                # Facebook tracking
+                "fbclid": lead.get("fbclid"),
+                "_fbc": lead.get("_fbc"),
+                "_fbp": lead.get("_fbp"),
+                # Datos adicionales
+                "referrer": lead.get("referrer"),
+                "currentUrl": lead.get("current_url"),
+                "sessionId": lead.get("session_id")
             }
             leads.append(formatted_lead)
         
