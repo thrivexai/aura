@@ -194,3 +194,5 @@ test_plan:
 agent_communication:
   - agent: "main"
     message: "Usuario reportó problema de acceso al panel admin. Verificación completa realizada - panel funcionando perfectamente en /admin con todas las funcionalidades (dashboard, leads, filtros, exportación)"
+  - agent: "testing"
+    message: "Tested new admin panel API endpoints (/api/leads, /api/purchases, /api/metrics). Found and fixed critical async MongoDB cursor issues. All endpoints now working correctly with proper JSON responses. Fixed: AsyncIOMotorCursor iteration and async count_documents operations. All endpoints return expected data structures and handle empty database gracefully."
