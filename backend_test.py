@@ -509,6 +509,8 @@ def main():
         "leads": False,
         "purchases": False, 
         "metrics": False,
+        "csv_export_leads": False,
+        "csv_export_purchases": False,
         "error_handling": False
     }
     
@@ -516,6 +518,8 @@ def main():
     results["leads"] = test_leads_endpoint()
     results["purchases"] = test_purchases_endpoint()
     results["metrics"] = test_metrics_endpoint()
+    results["csv_export_leads"] = test_csv_export_leads()
+    results["csv_export_purchases"] = test_csv_export_purchases()
     results["error_handling"] = test_error_handling()
     
     # Summary
