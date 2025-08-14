@@ -200,6 +200,16 @@ const AdminPanel = () => {
 
       <main className="px-6 py-8">
         <div className="max-w-7xl mx-auto">
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2 text-red-700">
+              <AlertCircle className="w-5 h-5" />
+              <span>Error cargando datos: {error}</span>
+              <Button onClick={fetchData} variant="outline" size="sm" className="ml-auto">
+                Reintentar
+              </Button>
+            </div>
+          )}
+          
           <Tabs defaultValue="dashboard" className="space-y-6">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
