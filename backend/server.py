@@ -134,7 +134,7 @@ async def get_purchases():
         purchases_cursor = db.purchase_webhooks.find().sort("timestamp", -1).limit(100)
         purchases = []
         
-        for purchase in purchases_cursor:
+        async for purchase in purchases_cursor:
             # Convertir ObjectId a string si existe
             if "_id" in purchase:
                 purchase["_id"] = str(purchase["_id"])
