@@ -486,20 +486,191 @@ const AdminPanel = () => {
             </TabsContent>
 
             {/* Analytics Tab */}
-            <TabsContent value="analytics">
+            <TabsContent value="analytics" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Distribución por tipo de negocio */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Distribución por Tipo de Negocio</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {(() => {
+                      const businessTypes = {};
+                      allLeads.forEach(lead => {
+                        const type = lead.businessType || 'sin-especificar';
+                        businessTypes[type] = (businessTypes[type] || 0) + 1;
+                      });
+                      
+                      return (
+                        <div className="space-y-3">
+                          {Object.entries(businessTypes).map(([type, count]) => (
+                            <div key={type} className="flex items-center justify-between">
+                              <span className="text-sm capitalize">{type.replace('-', ' ')}</span>
+                              <div className="flex items-center space-x-2">
+                                <div className="w-20 bg-stone-200 rounded-full h-2">
+                                  <div 
+                                    className="bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full"
+                                    style={{ width: `${(count / allLeads.length) * 100}%` }}
+                                  ></div>
+                                </div>
+                                <span className="text-sm font-medium">{count}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </CardContent>
+                </Card>
+
+                {/* Distribución por costos principales */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Principales Costos Reportados</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {(() => {
+                      const costs = {};
+                      allLeads.forEach(lead => {
+                        const cost = lead.mainCost || 'sin-especificar';
+                        costs[cost] = (costs[cost] || 0) + 1;
+                      });
+                      
+                      return (
+                        <div className="space-y-3">
+                          {Object.entries(costs).map(([cost, count]) => (
+                            <div key={cost} className="flex items-center justify-between">
+                              <span className="text-sm capitalize">{cost.replace('-', ' ')}</span>
+                              <div className="flex items-center space-x-2">
+                                <div className="w-20 bg-stone-200 rounded-full h-2">
+                                  <div 
+                                    className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full"
+                                    style={{ width: `${(count / allLeads.length) * 100}%` }}
+                                  ></div>
+                                </div>
+                                <span className="text-sm font-medium">{count}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </CardContent>
+                </Card>
+
+                {/* Objetivos más comunes */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Objetivos Principales</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {(() => {
+                      const objectives = {};
+                      allLeads.forEach(lead => {
+                        const obj = lead.objective || 'sin-especificar';
+                        objectives[obj] = (objectives[obj] || 0) + 1;
+                      });
+                      
+                      return (
+                        <div className="space-y-3">
+                          {Object.entries(objectives).map(([obj, count]) => (
+                            <div key={obj} className="flex items-center justify-between">
+                              <span className="text-sm capitalize">{obj.replace('-', ' ')}</span>
+                              <div className="flex items-center space-x-2">
+                                <div className="w-20 bg-stone-200 rounded-full h-2">
+                                  <div 
+                                    className="bg-gradient-to-r from-green-500 to-teal-500 h-2 rounded-full"
+                                    style={{ width: `${(count / allLeads.length) * 100}%` }}
+                                  ></div>
+                                </div>
+                                <span className="text-sm font-medium">{count}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </CardContent>
+                </Card>
+
+                {/* Uso de IA */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Nivel de Uso de IA</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {(() => {
+                      const aiUsage = {};
+                      allLeads.forEach(lead => {
+                        const usage = lead.aiUsage || 'sin-especificar';
+                        aiUsage[usage] = (aiUsage[usage] || 0) + 1;
+                      });
+                      
+                      return (
+                        <div className="space-y-3">
+                          {Object.entries(aiUsage).map(([usage, count]) => (
+                            <div key={usage} className="flex items-center justify-between">
+                              <span className="text-sm capitalize">{usage.replace('-', ' ')}</span>
+                              <div className="flex items-center space-x-2">
+                                <div className="w-20 bg-stone-200 rounded-full h-2">
+                                  <div 
+                                    className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full"
+                                    style={{ width: `${(count / allLeads.length) * 100}%` }}
+                                  ></div>
+                                </div>
+                                <span className="text-sm font-medium">{count}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Tabla de conversión por etapa */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Análisis detallado</CardTitle>
-                  <CardDescription>
-                    Métricas avanzadas y reportes del funnel
-                  </CardDescription>
+                  <CardTitle>Análisis de Conversión por Etapa</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center py-8 text-stone-500">
-                    Dashboard de analytics en desarrollo...
-                    <br />
-                    <small>Próximamente: Gráficos de conversión, cohorts, A/B testing</small>
-                  </div>
+                  {(() => {
+                    const stages = {
+                      'lead_capture': 'Captura de Lead',
+                      'diagnosis': 'Diagnóstico', 
+                      'checkout': 'Checkout',
+                      'purchased': 'Comprado'
+                    };
+                    
+                    const stageData = Object.entries(stages).map(([stage, label]) => {
+                      const count = allLeads.filter(lead => lead.stage === stage).length;
+                      const percentage = allLeads.length > 0 ? (count / allLeads.length) * 100 : 0;
+                      return { stage, label, count, percentage };
+                    });
+                    
+                    return (
+                      <div className="space-y-4">
+                        {stageData.map(({ stage, label, count, percentage }) => (
+                          <div key={stage} className="flex items-center justify-between p-3 border rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <Badge variant={getStageVariant(stage)}>{label}</Badge>
+                              <span className="text-sm text-stone-600">{count} leads</span>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                              <div className="w-32 bg-stone-200 rounded-full h-2">
+                                <div 
+                                  className="bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full"
+                                  style={{ width: `${percentage}%` }}
+                                ></div>
+                              </div>
+                              <span className="text-sm font-medium w-12">{percentage.toFixed(1)}%</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </CardContent>
               </Card>
             </TabsContent>
