@@ -7,6 +7,7 @@ import { Checkbox } from './ui/checkbox';
 import { Gift, Shield, ArrowRight } from 'lucide-react';
 import { FunnelContext } from '../App';
 import { trackEvent } from '../mock';
+import { sendLeadCaptureWebhook, saveUTMParameters } from '../utils/webhooks';
 
 const LeadCapture = () => {
   const navigate = useNavigate();
