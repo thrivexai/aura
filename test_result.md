@@ -259,6 +259,30 @@ backend:
         agent: "testing"
         comment: "Fixed async database operations by adding 'await' to count_documents() calls. Endpoint now returns proper metrics: totalVisitors: 100, leadsGenerated: 2, purchases: 1, conversionRate: 50.0, plus additional calculated metrics (quizStarts, quizCompletions, diagnosisViewed, checkoutClicks)"
 
+  - task: "GET /api/export-leads-csv endpoint"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "CSV EXPORT LEADS ENDPOINT FULLY TESTED: ✅ Returns proper CSV file with text/csv content-type, ✅ Includes Content-Disposition header for download (filename=leads_completo.csv), ✅ Contains all expected headers (26 fields including tracking data), ✅ Exports real tracking data from MongoDB including IP addresses (181.237.19.120), User Agent strings, Session IDs, UTM parameters, Facebook tracking data. Fixed field mapping issue from clientIP/userAgent database fields to CSV output. CSV contains 3 lead records with comprehensive tracking information."
+
+  - task: "GET /api/export-purchases-csv endpoint"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "CSV EXPORT PURCHASES ENDPOINT FULLY TESTED: ✅ Returns proper CSV file with text/csv content-type, ✅ Includes Content-Disposition header for download (filename=purchases_completo.csv), ✅ Contains all expected headers (25 fields including purchase and tracking data), ✅ Exports real tracking data from MongoDB including IP addresses, Transaction IDs (HM123456789), UTM Source (facebook), Facebook tracking (fbclid: 12345_test), Session IDs. Fixed field mapping issue from database fields to CSV output. CSV contains 1 purchase record with complete transaction and tracking information."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
