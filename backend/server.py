@@ -166,8 +166,8 @@ async def get_purchases():
 async def get_metrics():
     try:
         # Calcular métricas reales de la base de datos
-        total_leads = db.lead_webhooks.count_documents({})
-        total_purchases = db.purchase_webhooks.count_documents({})
+        total_leads = await db.lead_webhooks.count_documents({})
+        total_purchases = await db.purchase_webhooks.count_documents({})
         
         # Calcular métricas básicas (puedes expandir esto con más lógica)
         estimated_visitors = max(total_leads * 3, 100)  # Estimación basada en leads
