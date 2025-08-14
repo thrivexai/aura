@@ -268,6 +268,6 @@ test_plan:
 
 agent_communication:
   - agent: "main"
-    message: "Usuario reportó problema crítico: panel admin no muestra datos reales de formularios completados. PROBLEMA SOLUCIONADO: Implementados 3 nuevos endpoints de API (/api/leads, /api/purchases, /api/metrics) y actualizado frontend AdminPanel.js para usar datos reales en lugar de mock data. Backend testing completado exitosamente."
+    message: "Usuario reportó múltiples problemas críticos en el admin panel y checkout. TODOS SOLUCIONADOS: 1) Error JavaScript en checkout corregido con manejo robusto de errores, 2) Botón 'Ver detalles' ahora funcional con modal completo, 3) Analytics completamente implementado con dashboards reales, 4) Configuración funcional mostrando webhooks y estado, 5) Tracking de etapas mejorado, 6) Marca de agua Emergent eliminada. Webhooks ya incluían todos los datos requeridos (IP, fbclid, _fbc, _fbp, user agent, UTM params)."
   - agent: "testing"
     message: "Tested new admin panel API endpoints (/api/leads, /api/purchases, /api/metrics). Found and fixed critical async MongoDB cursor issues. All endpoints now working correctly with proper JSON responses. Fixed: AsyncIOMotorCursor iteration and async count_documents operations. All endpoints return expected data structures and handle empty database gracefully."
