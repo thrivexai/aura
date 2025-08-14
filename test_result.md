@@ -105,7 +105,22 @@
 user_problem_statement: "sale este error antes de pasar a lapagina de vetnas, el boton ver detalles en el admin no sirve de nada. necesito ver en que etapa quedo cada lead., analitycs y confuguracion no hacen nada... deben ser 100% funcionales. endonde veo esto (Al momento de que el usuario envíe el formulario se debe enviar esas informaciones junto con algunas otras a un webhook: Nombre, Correo, WhatsApp, IP, fbclid, _fbc, _fbp, user agent (Cualquier otra cosa que sea relevante para marcar eventos como initiatecheckout). Ahora bien después de realizar la compra necesitamos recibir esos datos en otro webhook para marcar purchase.) y no quiero que apareza la marca de agua de emergent 'made With emergent'"
 
 frontend:
-  - task: "Admin Panel Data Integration"
+  - task: "JavaScript Error in Checkout Page"
+    implemented: true
+    working: true
+    file: "components/Checkout.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Usuario reporta error JavaScript antes de llegar a página de ventas"
+      - working: true
+        agent: "main"
+        comment: "SOLUCIONADO: Agregado manejo de errores robusto para scripts de Hotmart con try-catch y error handlers para prevenir fallos de carga"
+
+  - task: "Ver Detalles Button Functionality"
     implemented: true
     working: true
     file: "components/AdminPanel.js"
@@ -115,10 +130,70 @@ frontend:
     status_history:
       - working: false
         agent: "main"
-        comment: "Panel admin usando datos mock en lugar de datos reales de la base de datos. Usuarios reportaban que los datos del formulario no aparecían"
+        comment: "Botón 'Ver detalles' no funcionaba - no tenía funcionalidad implementada"
       - working: true
         agent: "main"
-        comment: "SOLUCIONADO: Panel admin ahora conectado con APIs reales. Agregados endpoints /api/leads, /api/purchases, /api/metrics. Frontend actualizado para usar datos reales en lugar de mockLeads. Incluye manejo de errores, loading states, botón refresh"
+        comment: "SOLUCIONADO: Implementado botón funcional que muestra modal con detalles completos del lead incluyendo datos personales, etapa, información de tracking (IP, UTM, user agent), y datos de compra si aplica"
+
+  - task: "Analytics Tab Functionality"
+    implemented: true
+    working: true
+    file: "components/AdminPanel.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Pestaña Analytics mostraba mensaje 'en desarrollo' sin funcionalidad"
+      - working: true
+        agent: "main"
+        comment: "SOLUCIONADO: Implementado dashboard completo de analytics con distribuciones por tipo de negocio, costos principales, objetivos, uso de IA, y análisis de conversión por etapa - todo basado en datos reales"
+
+  - task: "Configuration Tab Functionality"
+    implemented: true
+    working: true
+    file: "components/AdminPanel.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Pestaña Configuración mostraba mensaje 'en desarrollo' sin funcionalidad"
+      - working: true
+        agent: "main"
+        comment: "SOLUCIONADO: Implementado panel completo de configuración mostrando webhooks activos, parámetros de tracking capturados, estado de base de datos, y opciones de exportación"
+
+  - task: "Lead Stage Tracking"
+    implemented: true
+    working: true
+    file: "components/AdminPanel.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Usuario necesita ver en qué etapa quedó cada lead"
+      - working: true
+        agent: "main"
+        comment: "SOLUCIONADO: Mejorado sistema de etapas con badges de colores y labels claros. Modal de detalles muestra etapa actual de cada lead"
+
+  - task: "Remove Emergent Watermark"
+    implemented: true
+    working: true
+    file: "public/index.html"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Usuario reporta marca de agua 'Made with Emergent' visible"
+      - working: true
+        agent: "main"
+        comment: "SOLUCIONADO: Eliminada marca de agua de /app/frontend/public/index.html y actualizado título y descripción del HTML"
 
 backend:
   - task: "AdminPanel API Routes"
