@@ -136,6 +136,30 @@ const SalesPage = () => {
   // Para desarrollo, siempre mostrar la página con datos mock si no hay datos del funnel
   console.log("🔧 Datos del funnel:", funnelData);
 
+  // Listener para detectar cuando se completa el pago en Hotmart
+  useEffect(() => {
+    const handleMessage = (event) => {
+      // Hotmart envía mensajes cuando se completa el pago
+      if (event.origin === 'https://pay.hotmart.com' || event.origin === 'https://static.hotmart.com') {
+        if (event.data && event.data.type === 'HOTMART_PURCHASE_SUCCESS') {
+          trackEvent('purchase_success', {
+            order_id: event.data.transaction_id || `ORDER_${Date.now()}`,
+            value: 15,
+            currency: 'USD',
+            lead_email: leadEmail,
+            payment_method: 'hotmart'
+          });
+          
+          // Redirigir a página de gracias
+          navigate('/thank-you');
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [navigate, leadEmail]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100">
       {/* Header fijo con urgencia */}
