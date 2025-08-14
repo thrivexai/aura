@@ -811,7 +811,7 @@ const AdminPanel = () => {
                         className="w-full"
                       >
                         <Download className="w-4 h-4 mr-2" />
-                        Exportar Todos los Leads (CSV)
+                        Exportar Todos los Leads Completo (CSV)
                       </Button>
                       <Button 
                         onClick={() => {
