@@ -43,20 +43,35 @@ const SalesPage = () => {
       bucket_id: bucketId
     });
 
-    // Cargar el widget de Hotmart
+    // Cargar el widget de Hotmart con manejo de errores
     const loadHotmart = () => {
-      // Script de Hotmart
-      const script = document.createElement('script');
-      script.src = 'https://static.hotmart.com/checkout/widget.min.js';
-      script.onload = () => setHotmartLoaded(true);
-      document.head.appendChild(script);
+      try {
+        // Script de Hotmart
+        const script = document.createElement('script');
+        script.src = 'https://static.hotmart.com/checkout/widget.min.js';
+        script.onload = () => {
+          console.log('Hotmart script loaded successfully');
+          setHotmartLoaded(true);
+        };
+        script.onerror = (error) => {
+          console.error('Error loading Hotmart script:', error);
+          setHotmartLoaded(false);
+        };
+        document.head.appendChild(script);
 
-      // CSS de Hotmart
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.type = 'text/css';
-      link.href = 'https://static.hotmart.com/css/hotmart-fb.min.css';
-      document.head.appendChild(link);
+        // CSS de Hotmart
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = 'https://static.hotmart.com/css/hotmart-fb.min.css';
+        link.onerror = (error) => {
+          console.error('Error loading Hotmart CSS:', error);
+        };
+        document.head.appendChild(link);
+      } catch (error) {
+        console.error('Error setting up Hotmart:', error);
+        setHotmartLoaded(false);
+      }
     };
 
     loadHotmart();
