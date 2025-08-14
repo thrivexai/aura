@@ -222,6 +222,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "Fixed async cursor iteration by changing 'for lead in leads_cursor' to 'async for lead in leads_cursor'. Endpoint now returns proper JSON with 'leads' array and 'total' count. Currently returning 2 leads with proper data structure including id, name, email, whatsapp, businessType, stage, createdAt, etc."
+      - working: true
+        agent: "testing"
+        comment: "VERIFIED EXPANDED TRACKING DATA: Tested updated endpoint with comprehensive tracking fields. All expected fields present: Basic data (name, email, whatsapp, businessType, stage, createdAt), Tracking data (ip, userAgent, sessionId), UTM parameters (utmSource, utmMedium, utmCampaign, utmContent, utmTerm), Facebook tracking (fbclid, _fbc, _fbp), Additional data (referrer, currentUrl). Endpoint returns 3 leads with complete data structure. All tracking fields properly mapped from database."
 
   - task: "GET /api/purchases endpoint"
     implemented: true
