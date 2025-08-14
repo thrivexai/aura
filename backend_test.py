@@ -167,10 +167,113 @@ def test_leads_endpoint():
         return False
 
 def test_purchases_endpoint():
-    """Test GET /api/purchases endpoint"""
-    print("\n🔍 TESTING PURCHASES ENDPOINT")
-    expected_keys = ["purchases", "total"]
-    return test_api_endpoint("purchases", expected_keys)
+    """Test GET /api/purchases endpoint with expanded tracking data"""
+    print("\n🔍 TESTING PURCHASES ENDPOINT WITH EXPANDED TRACKING DATA")
+    
+    url = f"{BACKEND_URL}/api/purchases"
+    print(f"Testing: {url}")
+    
+    try:
+        response = requests.get(url, timeout=10)
+        print(f"Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f"Response Type: {type(data)}")
+            
+            # Check main structure
+            expected_main_keys = ["purchases", "total"]
+            if not all(key in data for key in expected_main_keys):
+                print(f"❌ Missing main keys. Expected: {expected_main_keys}, Got: {list(data.keys())}")
+                return False
+            
+            print(f"✅ Main structure correct: {expected_main_keys}")
+            print(f"Total purchases: {data['total']}")
+            
+            # Check individual purchase structure if purchases exist
+            if data['purchases']:
+                purchase = data['purchases'][0]
+                print(f"\n📋 CHECKING PURCHASE DATA STRUCTURE:")
+                
+                # Basic data fields
+                basic_fields = ['id', 'name', 'email', 'whatsapp', 'businessType', 'stage', 'createdAt']
+                # Purchase specific fields
+                purchase_fields = ['transactionId', 'amount']
+                # Tracking data fields
+                tracking_fields = ['ip', 'userAgent', 'sessionId']
+                # UTM parameters
+                utm_fields = ['utmSource', 'utmMedium', 'utmCampaign', 'utmContent', 'utmTerm']
+                # Facebook tracking
+                fb_fields = ['fbclid', '_fbc', '_fbp']
+                # Additional data
+                additional_fields = ['referrer', 'currentUrl']
+                
+                all_expected_fields = basic_fields + purchase_fields + tracking_fields + utm_fields + fb_fields + additional_fields
+                
+                print(f"Purchase keys present: {list(purchase.keys())}")
+                
+                # Check each category
+                missing_basic = [f for f in basic_fields if f not in purchase]
+                missing_purchase = [f for f in purchase_fields if f not in purchase]
+                missing_tracking = [f for f in tracking_fields if f not in purchase]
+                missing_utm = [f for f in utm_fields if f not in purchase]
+                missing_fb = [f for f in fb_fields if f not in purchase]
+                missing_additional = [f for f in additional_fields if f not in purchase]
+                
+                print(f"✅ Basic fields: {[f for f in basic_fields if f in purchase]}")
+                if missing_basic:
+                    print(f"❌ Missing basic fields: {missing_basic}")
+                
+                print(f"✅ Purchase fields: {[f for f in purchase_fields if f in purchase]}")
+                if missing_purchase:
+                    print(f"❌ Missing purchase fields: {missing_purchase}")
+                
+                print(f"✅ Tracking fields: {[f for f in tracking_fields if f in purchase]}")
+                if missing_tracking:
+                    print(f"❌ Missing tracking fields: {missing_tracking}")
+                
+                print(f"✅ UTM fields: {[f for f in utm_fields if f in purchase]}")
+                if missing_utm:
+                    print(f"❌ Missing UTM fields: {missing_utm}")
+                
+                print(f"✅ Facebook fields: {[f for f in fb_fields if f in purchase]}")
+                if missing_fb:
+                    print(f"❌ Missing Facebook fields: {missing_fb}")
+                
+                print(f"✅ Additional fields: {[f for f in additional_fields if f in purchase]}")
+                if missing_additional:
+                    print(f"❌ Missing additional fields: {missing_additional}")
+                
+                # Show sample values
+                print(f"\n📊 SAMPLE PURCHASE DATA:")
+                for field in all_expected_fields:
+                    if field in purchase:
+                        value = purchase[field]
+                        if value is not None:
+                            print(f"  {field}: {value}")
+                        else:
+                            print(f"  {field}: null")
+                
+                # All fields should be present (even if null)
+                missing_all = [f for f in all_expected_fields if f not in purchase]
+                if missing_all:
+                    print(f"❌ Missing expected fields: {missing_all}")
+                    return False
+                else:
+                    print(f"✅ All expected tracking fields present in response structure")
+                    return True
+            else:
+                print("ℹ️  No purchases in database - structure test passed but no data to verify")
+                return True
+                
+        else:
+            print(f"❌ HTTP Error: {response.status_code}")
+            print(f"Response: {response.text[:200]}...")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Request failed: {str(e)}")
+        return False
 
 def test_metrics_endpoint():
     """Test GET /api/metrics endpoint"""
