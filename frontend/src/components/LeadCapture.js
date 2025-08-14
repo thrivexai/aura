@@ -22,6 +22,9 @@ const LeadCapture = () => {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
+    // Guardar UTM parameters al cargar la página
+    saveUTMParameters();
+    
     trackEvent('lead_form_view', {
       quiz_completed: Object.keys(funnelData.answers).length > 0
     });
