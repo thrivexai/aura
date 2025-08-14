@@ -127,7 +127,7 @@ const AdminPanel = () => {
     return variants[stage] || 'outline';
   };
 
-  const filteredLeads = leads.filter(lead => {
+  const filteredLeads = allLeads.filter(lead => {
     const matchesSearch = !filters.search || 
       lead.name.toLowerCase().includes(filters.search.toLowerCase()) ||
       lead.email.toLowerCase().includes(filters.search.toLowerCase());
