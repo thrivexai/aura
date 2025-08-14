@@ -23,6 +23,7 @@ const SalesPage = () => {
   const { funnelData } = useContext(FunnelContext);
   const [timeLeft, setTimeLeft] = useState(48 * 60 * 60); // 48 horas en segundos
   const [hotmartLoaded, setHotmartLoaded] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Obtener datos personalizados basados en las respuestas o usar defaults
   const bucketId = funnelData?.answers?.[3] || 'fotografia';
