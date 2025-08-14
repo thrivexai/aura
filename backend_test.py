@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """
 Backend API Testing Script for Admin Panel Endpoints
-Tests the new API endpoints: /api/leads, /api/purchases, /api/metrics
+Tests the new API endpoints: /api/leads, /api/purchases, /api/metrics, /api/export-leads-csv, /api/export-purchases-csv
 """
 
 import requests
 import json
 import sys
+import csv
+from io import StringIO
 from datetime import datetime
 
 # Use the production backend URL from frontend/.env
