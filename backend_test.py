@@ -281,6 +281,207 @@ def test_metrics_endpoint():
     expected_keys = ["totalVisitors", "leadsGenerated", "purchases", "conversionRate"]
     return test_api_endpoint("metrics", expected_keys)
 
+def test_csv_export_leads():
+    """Test GET /api/export-leads-csv endpoint"""
+    print("\n🔍 TESTING CSV EXPORT LEADS ENDPOINT")
+    
+    url = f"{BACKEND_URL}/api/export-leads-csv"
+    print(f"Testing: {url}")
+    
+    try:
+        response = requests.get(url, timeout=15)
+        print(f"Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            # Check Content-Type header
+            content_type = response.headers.get('content-type', '')
+            print(f"Content-Type: {content_type}")
+            
+            if 'text/csv' not in content_type:
+                print(f"❌ Expected text/csv content type, got: {content_type}")
+                return False
+            
+            # Check Content-Disposition header
+            content_disposition = response.headers.get('content-disposition', '')
+            print(f"Content-Disposition: {content_disposition}")
+            
+            if 'attachment' not in content_disposition or 'filename=' not in content_disposition:
+                print(f"❌ Missing or invalid Content-Disposition header")
+                return False
+            
+            # Check CSV content
+            csv_content = response.text
+            lines = csv_content.strip().split('\n')
+            
+            if not lines:
+                print("❌ Empty CSV content")
+                return False
+            
+            # Check headers
+            headers = lines[0].split(',')
+            expected_headers = [
+                'Nombre', 'Email', 'WhatsApp', 'Tipo Negocio', 'Costo Principal', 'Objetivo', 'Uso IA', 'Etapa', 'Fecha Creacion',
+                'IP', 'User Agent', 'Session ID', 'Referrer', 'URL Actual',
+                'UTM Source', 'UTM Medium', 'UTM Campaign', 'UTM Content', 'UTM Term',
+                'fbclid', '_fbc', '_fbp',
+                'Transaction ID', 'Valor', 'Moneda', 'Timestamp Completo'
+            ]
+            
+            print(f"CSV Headers ({len(headers)}): {headers[:5]}... (showing first 5)")
+            print(f"Expected Headers ({len(expected_headers)}): {expected_headers[:5]}... (showing first 5)")
+            
+            # Check if all expected headers are present
+            missing_headers = []
+            for expected in expected_headers:
+                if expected not in headers:
+                    missing_headers.append(expected)
+            
+            if missing_headers:
+                print(f"❌ Missing headers: {missing_headers}")
+                return False
+            
+            print(f"✅ All expected headers present")
+            print(f"Total CSV lines: {len(lines)} (including header)")
+            
+            # Check for real data (not all N/A values) if there are data rows
+            if len(lines) > 1:
+                print("\n📊 CHECKING CSV DATA CONTENT:")
+                data_row = lines[1].split(',')
+                
+                # Count non-N/A values in tracking fields
+                tracking_indices = []
+                for i, header in enumerate(headers):
+                    if header in ['IP', 'User Agent', 'Session ID', 'UTM Source', 'UTM Medium', 'UTM Campaign', 'fbclid', '_fbc', '_fbp']:
+                        tracking_indices.append(i)
+                
+                real_data_count = 0
+                for idx in tracking_indices:
+                    if idx < len(data_row) and data_row[idx].strip() not in ['N/A', '', '""']:
+                        real_data_count += 1
+                        print(f"  Real data in {headers[idx]}: {data_row[idx]}")
+                
+                print(f"Real tracking data fields: {real_data_count}/{len(tracking_indices)}")
+                
+                if real_data_count > 0:
+                    print("✅ CSV contains real tracking data (not just N/A values)")
+                else:
+                    print("⚠️  CSV contains mostly N/A values - may indicate missing webhook data")
+            else:
+                print("ℹ️  No data rows in CSV - only headers present")
+            
+            print("✅ CSV export leads endpoint working correctly")
+            return True
+            
+        else:
+            print(f"❌ HTTP Error: {response.status_code}")
+            print(f"Response: {response.text[:200]}...")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Request failed: {str(e)}")
+        return False
+
+def test_csv_export_purchases():
+    """Test GET /api/export-purchases-csv endpoint"""
+    print("\n🔍 TESTING CSV EXPORT PURCHASES ENDPOINT")
+    
+    url = f"{BACKEND_URL}/api/export-purchases-csv"
+    print(f"Testing: {url}")
+    
+    try:
+        response = requests.get(url, timeout=15)
+        print(f"Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            # Check Content-Type header
+            content_type = response.headers.get('content-type', '')
+            print(f"Content-Type: {content_type}")
+            
+            if 'text/csv' not in content_type:
+                print(f"❌ Expected text/csv content type, got: {content_type}")
+                return False
+            
+            # Check Content-Disposition header
+            content_disposition = response.headers.get('content-disposition', '')
+            print(f"Content-Disposition: {content_disposition}")
+            
+            if 'attachment' not in content_disposition or 'filename=' not in content_disposition:
+                print(f"❌ Missing or invalid Content-Disposition header")
+                return False
+            
+            # Check CSV content
+            csv_content = response.text
+            lines = csv_content.strip().split('\n')
+            
+            if not lines:
+                print("❌ Empty CSV content")
+                return False
+            
+            # Check headers
+            headers = lines[0].split(',')
+            expected_headers = [
+                'Nombre', 'Email', 'WhatsApp', 'Transaction ID', 'Fecha', 'Valor', 'Moneda',
+                'Tipo Negocio', 'Costo Principal', 'Objetivo', 'Uso IA',
+                'IP', 'User Agent', 'Session ID',
+                'UTM Source', 'UTM Medium', 'UTM Campaign', 'UTM Content', 'UTM Term',
+                'fbclid', '_fbc', '_fbp',
+                'Referrer', 'URL Actual', 'Timestamp Completo'
+            ]
+            
+            print(f"CSV Headers ({len(headers)}): {headers[:5]}... (showing first 5)")
+            print(f"Expected Headers ({len(expected_headers)}): {expected_headers[:5]}... (showing first 5)")
+            
+            # Check if all expected headers are present
+            missing_headers = []
+            for expected in expected_headers:
+                if expected not in headers:
+                    missing_headers.append(expected)
+            
+            if missing_headers:
+                print(f"❌ Missing headers: {missing_headers}")
+                return False
+            
+            print(f"✅ All expected headers present")
+            print(f"Total CSV lines: {len(lines)} (including header)")
+            
+            # Check for real data (not all N/A values) if there are data rows
+            if len(lines) > 1:
+                print("\n📊 CHECKING CSV DATA CONTENT:")
+                data_row = lines[1].split(',')
+                
+                # Count non-N/A values in tracking fields
+                tracking_indices = []
+                for i, header in enumerate(headers):
+                    if header in ['IP', 'User Agent', 'Session ID', 'Transaction ID', 'UTM Source', 'UTM Medium', 'UTM Campaign', 'fbclid', '_fbc', '_fbp']:
+                        tracking_indices.append(i)
+                
+                real_data_count = 0
+                for idx in tracking_indices:
+                    if idx < len(data_row) and data_row[idx].strip() not in ['N/A', '', '""']:
+                        real_data_count += 1
+                        print(f"  Real data in {headers[idx]}: {data_row[idx]}")
+                
+                print(f"Real tracking data fields: {real_data_count}/{len(tracking_indices)}")
+                
+                if real_data_count > 0:
+                    print("✅ CSV contains real tracking data (not just N/A values)")
+                else:
+                    print("⚠️  CSV contains mostly N/A values - may indicate missing webhook data")
+            else:
+                print("ℹ️  No data rows in CSV - only headers present")
+            
+            print("✅ CSV export purchases endpoint working correctly")
+            return True
+            
+        else:
+            print(f"❌ HTTP Error: {response.status_code}")
+            print(f"Response: {response.text[:200]}...")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Request failed: {str(e)}")
+        return False
+
 def test_error_handling():
     """Test error handling with invalid endpoint"""
     print("\n🔍 TESTING ERROR HANDLING")
