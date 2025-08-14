@@ -311,16 +311,17 @@ def test_csv_export_leads():
                 print(f"❌ Missing or invalid Content-Disposition header")
                 return False
             
-            # Check CSV content
+            # Parse CSV content properly
             csv_content = response.text
-            lines = csv_content.strip().split('\n')
+            csv_reader = csv.reader(StringIO(csv_content))
+            rows = list(csv_reader)
             
-            if not lines:
+            if not rows:
                 print("❌ Empty CSV content")
                 return False
             
             # Check headers
-            headers = lines[0].split(',')
+            headers = rows[0]
             expected_headers = [
                 'Nombre', 'Email', 'WhatsApp', 'Tipo Negocio', 'Costo Principal', 'Objetivo', 'Uso IA', 'Etapa', 'Fecha Creacion',
                 'IP', 'User Agent', 'Session ID', 'Referrer', 'URL Actual',
@@ -343,29 +344,44 @@ def test_csv_export_leads():
                 return False
             
             print(f"✅ All expected headers present")
-            print(f"Total CSV lines: {len(lines)} (including header)")
+            print(f"Total CSV rows: {len(rows)} (including header)")
             
             # Check for real data (not all N/A values) if there are data rows
-            if len(lines) > 1:
+            if len(rows) > 1:
                 print("\n📊 CHECKING CSV DATA CONTENT:")
-                data_row = lines[1].split(',')
+                data_row = rows[1]
                 
-                # Count non-N/A values in tracking fields
-                tracking_indices = []
-                for i, header in enumerate(headers):
-                    if header in ['IP', 'User Agent', 'Session ID', 'UTM Source', 'UTM Medium', 'UTM Campaign', 'fbclid', '_fbc', '_fbp']:
-                        tracking_indices.append(i)
+                # Create header-to-index mapping
+                header_map = {header: idx for idx, header in enumerate(headers)}
                 
+                # Check specific tracking fields for real data
+                tracking_fields = ['IP', 'User Agent', 'Session ID', 'UTM Source', 'UTM Medium', 'UTM Campaign', 'fbclid', '_fbc', '_fbp']
                 real_data_count = 0
-                for idx in tracking_indices:
-                    if idx < len(data_row) and data_row[idx].strip() not in ['N/A', '', '""']:
-                        real_data_count += 1
-                        print(f"  Real data in {headers[idx]}: {data_row[idx]}")
                 
-                print(f"Real tracking data fields: {real_data_count}/{len(tracking_indices)}")
+                for field in tracking_fields:
+                    if field in header_map:
+                        idx = header_map[field]
+                        if idx < len(data_row):
+                            value = data_row[idx].strip()
+                            if value and value not in ['N/A', '', 'null']:
+                                real_data_count += 1
+                                print(f"  Real data in {field}: {value}")
+                            else:
+                                print(f"  {field}: {value or 'N/A'}")
+                
+                print(f"Real tracking data fields: {real_data_count}/{len(tracking_fields)}")
+                
+                # Also check basic data
+                basic_fields = ['Nombre', 'Email']
+                for field in basic_fields:
+                    if field in header_map:
+                        idx = header_map[field]
+                        if idx < len(data_row):
+                            value = data_row[idx].strip()
+                            print(f"  {field}: {value}")
                 
                 if real_data_count > 0:
-                    print("✅ CSV contains real tracking data (not just N/A values)")
+                    print("✅ CSV contains some real tracking data")
                 else:
                     print("⚠️  CSV contains mostly N/A values - may indicate missing webhook data")
             else:
@@ -411,16 +427,17 @@ def test_csv_export_purchases():
                 print(f"❌ Missing or invalid Content-Disposition header")
                 return False
             
-            # Check CSV content
+            # Parse CSV content properly
             csv_content = response.text
-            lines = csv_content.strip().split('\n')
+            csv_reader = csv.reader(StringIO(csv_content))
+            rows = list(csv_reader)
             
-            if not lines:
+            if not rows:
                 print("❌ Empty CSV content")
                 return False
             
             # Check headers
-            headers = lines[0].split(',')
+            headers = rows[0]
             expected_headers = [
                 'Nombre', 'Email', 'WhatsApp', 'Transaction ID', 'Fecha', 'Valor', 'Moneda',
                 'Tipo Negocio', 'Costo Principal', 'Objetivo', 'Uso IA',
@@ -444,29 +461,44 @@ def test_csv_export_purchases():
                 return False
             
             print(f"✅ All expected headers present")
-            print(f"Total CSV lines: {len(lines)} (including header)")
+            print(f"Total CSV rows: {len(rows)} (including header)")
             
             # Check for real data (not all N/A values) if there are data rows
-            if len(lines) > 1:
+            if len(rows) > 1:
                 print("\n📊 CHECKING CSV DATA CONTENT:")
-                data_row = lines[1].split(',')
+                data_row = rows[1]
                 
-                # Count non-N/A values in tracking fields
-                tracking_indices = []
-                for i, header in enumerate(headers):
-                    if header in ['IP', 'User Agent', 'Session ID', 'Transaction ID', 'UTM Source', 'UTM Medium', 'UTM Campaign', 'fbclid', '_fbc', '_fbp']:
-                        tracking_indices.append(i)
+                # Create header-to-index mapping
+                header_map = {header: idx for idx, header in enumerate(headers)}
                 
+                # Check specific tracking fields for real data
+                tracking_fields = ['IP', 'User Agent', 'Session ID', 'Transaction ID', 'UTM Source', 'UTM Medium', 'UTM Campaign', 'fbclid', '_fbc', '_fbp']
                 real_data_count = 0
-                for idx in tracking_indices:
-                    if idx < len(data_row) and data_row[idx].strip() not in ['N/A', '', '""']:
-                        real_data_count += 1
-                        print(f"  Real data in {headers[idx]}: {data_row[idx]}")
                 
-                print(f"Real tracking data fields: {real_data_count}/{len(tracking_indices)}")
+                for field in tracking_fields:
+                    if field in header_map:
+                        idx = header_map[field]
+                        if idx < len(data_row):
+                            value = data_row[idx].strip()
+                            if value and value not in ['N/A', '', 'null']:
+                                real_data_count += 1
+                                print(f"  Real data in {field}: {value}")
+                            else:
+                                print(f"  {field}: {value or 'N/A'}")
+                
+                print(f"Real tracking data fields: {real_data_count}/{len(tracking_fields)}")
+                
+                # Also check basic data
+                basic_fields = ['Nombre', 'Email', 'Transaction ID', 'Valor']
+                for field in basic_fields:
+                    if field in header_map:
+                        idx = header_map[field]
+                        if idx < len(data_row):
+                            value = data_row[idx].strip()
+                            print(f"  {field}: {value}")
                 
                 if real_data_count > 0:
-                    print("✅ CSV contains real tracking data (not just N/A values)")
+                    print("✅ CSV contains some real tracking data")
                 else:
                     print("⚠️  CSV contains mostly N/A values - may indicate missing webhook data")
             else:
