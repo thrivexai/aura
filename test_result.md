@@ -186,13 +186,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Admin Panel Access and Functionality"
-    - "GET /api/leads endpoint"
-    - "GET /api/purchases endpoint"
-    - "GET /api/metrics endpoint"
+    - "Admin Panel Data Integration"
   stuck_tasks: []
   test_all: false
-  test_priority: "high_first"
+  test_priority: "user_manual_testing"
 
 agent_communication:
   - agent: "main"
