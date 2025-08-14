@@ -150,66 +150,28 @@ const AdminPanel = () => {
     return matchesSearch && matchesStage && matchesBusinessType;
   });
 
-  const exportLeads = () => {
+  const exportLeads = async () => {
     trackEvent('leads_export', {
       total_leads: filteredLeads.length,
       filters: filters
     });
     
-    const csvContent = [
-      [
-        // Datos básicos
-        'Nombre', 'Email', 'WhatsApp', 'Tipo Negocio', 'Costo Principal', 'Objetivo', 'Uso IA', 'Etapa', 'Fecha Creación',
-        // Datos de tracking
-        'IP', 'User Agent', 'Session ID', 'Referrer', 'URL Actual',
-        // UTM Parameters
-        'UTM Source', 'UTM Medium', 'UTM Campaign', 'UTM Content', 'UTM Term',
-        // Facebook Tracking
-        'fbclid', '_fbc', '_fbp',
-        // Datos de compra (si aplica)
-        'Transaction ID', 'Valor', 'Moneda'
-      ],
-      ...filteredLeads.map(lead => [
-        // Datos básicos
-        lead.name || '',
-        lead.email || '',
-        lead.whatsapp || 'N/A',
-        lead.businessType || '',
-        lead.mainCost || '',
-        lead.objective || '',
-        lead.aiUsage || '',
-        getStageLabel(lead.stage),
-        new Date(lead.createdAt).toLocaleDateString('es-ES'),
-        // Datos de tracking
-        lead.ip || 'N/A',
-        lead.userAgent || 'N/A',
-        lead.id || 'N/A',
-        lead.referrer || 'N/A',
-        lead.currentUrl || 'N/A',
-        // UTM Parameters
-        lead.utmSource || 'N/A',
-        lead.utmMedium || 'N/A',
-        lead.utmCampaign || 'N/A',
-        lead.utmContent || 'N/A',
-        lead.utmTerm || 'N/A',
-        // Facebook Tracking
-        lead.fbclid || 'N/A',
-        lead._fbc || 'N/A',
-        lead._fbp || 'N/A',
-        // Datos de compra
-        lead.transactionId || 'N/A',
-        lead.stage === 'purchased' ? '$15.00' : 'N/A',
-        lead.stage === 'purchased' ? 'USD' : 'N/A'
-      ])
-    ].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
-    
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `leads_completo_aura_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+    try {
+      const response = await fetch(`${backendUrl}/api/export-leads-csv`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `leads_completo_aura_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      } else {
+        console.error('Error downloading CSV:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error exporting leads:', error);
+    }
   };
 
   return (
