@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { FunnelContext } from '../App';
 import { trackEvent, diagnosisTemplates, workshopContent, testimonials } from '../mock';
+import { sendPurchaseWebhook } from '../utils/webhooks';
 
 const SalesPage = () => {
   const navigate = useNavigate();
