@@ -91,6 +91,100 @@ async def get_status_checks():
     status_checks = await db.status_checks.find().to_list(1000)
     return [StatusCheck(**status_check) for status_check in status_checks]
 
+# Endpoint para obtener IP del cliente
+@api_router.get("/get-client-ip")
+async def get_client_ip(request: Request):
+    # Obtener IP real del cliente considerando proxies
+    client_ip = request.client.host
+    
+    # Verificar headers de proxy
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        client_ip = forwarded_for.split(",")[0].strip()
+    
+    real_ip = request.headers.get("X-Real-IP")
+    if real_ip:
+        client_ip = real_ip
+    
+    return {"ip": client_ip}
+
+# Webhook para Lead Capture (InitiateCheckout)
+@api_router.post("/webhooks/lead-capture")
+async def lead_capture_webhook(webhook_data: LeadCaptureWebhook, request: Request):
+    try:
+        # Obtener IP del cliente
+        client_ip = request.client.host
+        forwarded_for = request.headers.get("X-Forwarded-For")
+        if forwarded_for:
+            client_ip = forwarded_for.split(",")[0].strip()
+        
+        # Agregar IP a los datos
+        webhook_dict = webhook_data.dict()
+        webhook_dict["clientIP"] = client_ip
+        webhook_dict["timestamp"] = datetime.utcnow()
+        webhook_dict["id"] = str(uuid.uuid4())
+        
+        # Guardar en base de datos
+        await db.lead_webhooks.insert_one(webhook_dict)
+        
+        # Aquí puedes agregar lógica para enviar a servicios externos
+        # Por ejemplo, Facebook Conversions API, Make.com, Zapier, etc.
+        
+        logger.info(f"Lead capture webhook received: {webhook_data.email}")
+        
+        return {
+            "success": True,
+            "message": "Lead capture webhook processed successfully",
+            "data": {
+                "email": webhook_data.email,
+                "eventType": webhook_data.eventType,
+                "clientIP": client_ip
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error processing lead capture webhook: {str(e)}")
+        return {"success": False, "error": str(e)}
+
+# Webhook para Purchase
+@api_router.post("/webhooks/purchase") 
+async def purchase_webhook(webhook_data: PurchaseWebhook, request: Request):
+    try:
+        # Obtener IP del cliente
+        client_ip = request.client.host
+        forwarded_for = request.headers.get("X-Forwarded-For")
+        if forwarded_for:
+            client_ip = forwarded_for.split(",")[0].strip()
+        
+        # Agregar IP a los datos
+        webhook_dict = webhook_data.dict()
+        webhook_dict["clientIP"] = client_ip
+        webhook_dict["timestamp"] = datetime.utcnow()
+        webhook_dict["id"] = str(uuid.uuid4())
+        
+        # Guardar en base de datos
+        await db.purchase_webhooks.insert_one(webhook_dict)
+        
+        # Aquí puedes agregar lógica para enviar a servicios externos
+        # Facebook Conversions API, email automation, etc.
+        
+        logger.info(f"Purchase webhook received: {webhook_data.email} - Transaction: {webhook_data.transactionId}")
+        
+        return {
+            "success": True,
+            "message": "Purchase webhook processed successfully", 
+            "data": {
+                "email": webhook_data.email,
+                "transactionId": webhook_data.transactionId,
+                "eventType": webhook_data.eventType,
+                "clientIP": client_ip
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error processing purchase webhook: {str(e)}")
+        return {"success": False, "error": str(e)}
+
 # Include the router in the main app
 app.include_router(api_router)
 
