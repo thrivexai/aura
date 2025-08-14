@@ -83,31 +83,14 @@ const SalesPage = () => {
     return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handlePurchase = async () => {
-    setIsProcessing(true);
-    
-    try {
-      // Simular procesamiento de pago
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      trackEvent('purchase_success', {
-        order_id: `ORDER_${Date.now()}`,
-        value: 15,
-        currency: 'USD',
-        lead_email: leadEmail,
-        payment_method: 'checkout'
-      });
-
-      navigate('/thank-you');
-      
-    } catch (error) {
-      trackEvent('purchase_fail', {
-        reason: error.message,
-        lead_email: leadEmail
-      });
-    } finally {
-      setIsProcessing(false);
-    }
+  const handleHotmartClick = () => {
+    trackEvent('purchase_attempt', {
+      order_id: `ORDER_${Date.now()}`,
+      value: 15,
+      currency: 'USD',
+      lead_email: leadEmail,
+      payment_method: 'hotmart'
+    });
   };
 
   // Personalización según el tipo de negocio y dolor
