@@ -16,13 +16,27 @@ import {
   BarChart3,
   Clock,
   Mail,
-  Phone
+  Phone,
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react';
-import { mockLeads, mockMetrics, quizQuestions, trackEvent } from '../mock';
+import { quizQuestions, trackEvent } from '../mock';
 
 const AdminPanel = () => {
-  const [leads, setLeads] = useState(mockLeads);
-  const [metrics, setMetrics] = useState(mockMetrics);
+  const [leads, setLeads] = useState([]);
+  const [purchases, setPurchases] = useState([]);
+  const [metrics, setMetrics] = useState({
+    totalVisitors: 0,
+    leadsGenerated: 0,
+    purchases: 0,
+    conversionRate: 0,
+    quizStarts: 0,
+    quizCompletions: 0,
+    diagnosisViewed: 0,
+    checkoutClicks: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     search: '',
     stage: 'all',
@@ -30,12 +44,58 @@ const AdminPanel = () => {
     dateRange: '7d'
   });
 
+  const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Fetch leads
+      const leadsResponse = await fetch(`${backendUrl}/api/leads`);
+      const leadsData = await leadsResponse.json();
+      
+      // Fetch purchases  
+      const purchasesResponse = await fetch(`${backendUrl}/api/purchases`);
+      const purchasesData = await purchasesResponse.json();
+      
+      // Fetch metrics
+      const metricsResponse = await fetch(`${backendUrl}/api/metrics`);
+      const metricsData = await metricsResponse.json();
+
+      if (leadsData.error || purchasesData.error || metricsData.error) {
+        throw new Error(leadsData.error || purchasesData.error || metricsData.error);
+      }
+
+      setLeads(leadsData.leads || []);
+      setPurchases(purchasesData.purchases || []);
+      setMetrics(metricsData);
+      
+      console.log('Data loaded successfully:', {
+        leads: leadsData.leads?.length || 0,
+        purchases: purchasesData.purchases?.length || 0,
+        metrics: metricsData
+      });
+      
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
+    fetchData();
     trackEvent('admin_panel_view', {
       admin_user: 'admin',
       section: 'dashboard'
     });
   }, []);
+
+  // Combinar leads y purchases para la vista unificada
+  const allLeads = [...leads, ...purchases].sort((a, b) => 
+    new Date(b.createdAt) - new Date(a.createdAt)
+  );
 
   const getStageLabel = (stage) => {
     const stageLabels = {
