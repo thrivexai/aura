@@ -93,16 +93,33 @@ export const sendLeadCaptureWebhook = async (leadData, quizAnswers) => {
     // Usar la URL configurada para lead capture
     const webhookUrl = buildWebhookUrl(webhookUrls.leadCapture);
     
-    const response = await fetch(webhookUrl, {
+    // Determinar si es URL externa para configurar CORS
+    const isExternalUrl = webhookUrl.startsWith('http://') || webhookUrl.startsWith('https://');
+    const fetchOptions = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(webhookData)
-    });
+    };
+
+    // Para URLs externas, usar mode: 'no-cors' para evitar problemas de CORS
+    if (isExternalUrl && !webhookUrl.includes(window.location.hostname)) {
+      fetchOptions.mode = 'no-cors';
+      console.log('🌐 Enviando a webhook externo (modo no-cors):', webhookUrl);
+    }
+
+    const response = await fetch(webhookUrl, fetchOptions);
 
     console.log('✅ Lead capture webhook enviado a:', webhookUrl);
     console.log('📤 Datos enviados:', webhookData);
+    
+    // En modo no-cors no podemos leer la respuesta, pero el webhook se envió
+    if (fetchOptions.mode === 'no-cors') {
+      console.log('ℹ️ Webhook externo enviado (respuesta no accesible por CORS)');
+      return { success: true, data: webhookData, url: webhookUrl, mode: 'no-cors' };
+    }
+    
     return { success: true, data: webhookData, url: webhookUrl };
     
   } catch (error) {
