@@ -18,7 +18,10 @@ import {
   Mail,
   Phone,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  Edit3,
+  Save,
+  X
 } from 'lucide-react';
 import { quizQuestions, trackEvent } from '../mock';
 
