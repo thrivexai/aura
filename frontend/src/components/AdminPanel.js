@@ -737,28 +737,88 @@ const AdminPanel = () => {
                 {/* Configuración de Webhooks */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Configuración de Webhooks</CardTitle>
-                    <CardDescription>URLs de destino para eventos del funnel</CardDescription>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>Configuración de Webhooks</CardTitle>
+                        <CardDescription>URLs de destino para eventos del funnel</CardDescription>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {!editingWebhooks ? (
+                          <Button onClick={handleEditWebhooks} variant="outline" size="sm">
+                            <Edit3 className="w-4 h-4 mr-2" />
+                            Editar
+                          </Button>
+                        ) : (
+                          <>
+                            <Button onClick={handleSaveWebhooks} variant="default" size="sm">
+                              <Save className="w-4 h-4 mr-2" />
+                              Guardar
+                            </Button>
+                            <Button onClick={handleCancelEdit} variant="outline" size="sm">
+                              <X className="w-4 h-4 mr-2" />
+                              Cancelar
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
                       <label className="text-sm font-medium text-stone-700">Webhook Lead Capture</label>
-                      <Input 
-                        value="/api/webhooks/lead-capture" 
-                        disabled 
-                        className="mt-1 font-mono text-xs"
-                      />
+                      {editingWebhooks ? (
+                        <Input 
+                          value={tempWebhookUrls.leadCapture}
+                          onChange={(e) => setTempWebhookUrls(prev => ({
+                            ...prev,
+                            leadCapture: e.target.value
+                          }))}
+                          placeholder="https://tu-dominio.com/webhook/lead-capture o /api/webhooks/lead-capture"
+                          className="mt-1 font-mono text-xs"
+                        />
+                      ) : (
+                        <Input 
+                          value={webhookUrls.leadCapture} 
+                          disabled 
+                          className="mt-1 font-mono text-xs"
+                        />
+                      )}
                       <p className="text-xs text-stone-500 mt-1">Se ejecuta cuando un usuario completa el formulario de lead</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-stone-700">Webhook Purchase</label>
-                      <Input 
-                        value="/api/webhooks/purchase" 
-                        disabled 
-                        className="mt-1 font-mono text-xs"
-                      />
+                      {editingWebhooks ? (
+                        <Input 
+                          value={tempWebhookUrls.purchase}
+                          onChange={(e) => setTempWebhookUrls(prev => ({
+                            ...prev,
+                            purchase: e.target.value
+                          }))}
+                          placeholder="https://tu-dominio.com/webhook/purchase o /api/webhooks/purchase"
+                          className="mt-1 font-mono text-xs"
+                        />
+                      ) : (
+                        <Input 
+                          value={webhookUrls.purchase} 
+                          disabled 
+                          className="mt-1 font-mono text-xs"
+                        />
+                      )}
                       <p className="text-xs text-stone-500 mt-1">Se ejecuta cuando se completa una compra</p>
                     </div>
+                    
+                    {editingWebhooks && (
+                      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-sm text-blue-700">
+                          <strong>Formatos válidos:</strong>
+                        </p>
+                        <ul className="text-xs text-blue-600 mt-1 space-y-1">
+                          <li>• URL completa: https://tu-dominio.com/webhook/lead-capture</li>
+                          <li>• URL relativa: /api/webhooks/lead-capture</li>
+                          <li>• Para usar endpoints internos, mantener URLs que empiecen con /api/</li>
+                        </ul>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
