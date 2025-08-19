@@ -339,10 +339,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Admin Panel Data Integration"
+    - "Webhook Configuration System Testing Complete"
   stuck_tasks: []
   test_all: false
-  test_priority: "user_manual_testing"
+  test_priority: "webhook_configuration_complete"
 
 agent_communication:
   - agent: "main"
