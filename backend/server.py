@@ -297,6 +297,43 @@ async def export_leads_csv():
         print(f"Error exporting leads CSV: {e}")
         return {"error": str(e)}
 
+@api_router.post("/proxy-webhook")
+async def proxy_webhook(request: Request):
+    """Proxy webhook requests to external URLs to avoid CORS issues"""
+    try:
+        import httpx
+        
+        # Get request data
+        webhook_data = await request.json()
+        target_url = webhook_data.pop('_target_url', None)
+        
+        if not target_url:
+            return {"success": False, "error": "Missing _target_url parameter"}
+        
+        # Validate target URL
+        if not (target_url.startswith('http://') or target_url.startswith('https://')):
+            return {"success": False, "error": "Invalid target URL"}
+        
+        # Send webhook to external URL
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(
+                target_url,
+                json=webhook_data,
+                headers={'Content-Type': 'application/json'}
+            )
+            
+            return {
+                "success": True,
+                "message": "Webhook proxied successfully",
+                "target_url": target_url,
+                "status_code": response.status_code,
+                "response_text": response.text[:200] if response.text else None
+            }
+            
+    except Exception as e:
+        print(f"Error proxying webhook: {e}")
+        return {"success": False, "error": f"Proxy error: {str(e)}"}
+
 @api_router.get("/export-purchases-csv")
 async def export_purchases_csv():
     """Export all purchases data to CSV format"""
