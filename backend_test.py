@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Backend API Testing Script for Admin Panel Endpoints
-Tests the new API endpoints: /api/leads, /api/purchases, /api/metrics, /api/export-leads-csv, /api/export-purchases-csv
+Backend API Testing Script for Webhook Configuration System
+Tests webhook endpoints and configuration system functionality
 """
 
 import requests
@@ -10,9 +10,10 @@ import sys
 import csv
 from io import StringIO
 from datetime import datetime
+import uuid
 
 # Use the production backend URL from frontend/.env
-BACKEND_URL = "https://aura-fashion-quiz.preview.emergentagent.com"
+BACKEND_URL = "https://7eadbe52-edd5-43c9-b30b-93260710090a.preview.emergentagent.com"
 
 def test_api_endpoint(endpoint, expected_keys=None):
     """Test a single API endpoint"""
