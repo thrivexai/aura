@@ -114,6 +114,7 @@ export const sendLeadCaptureWebhook = async (leadData, quizAnswers) => {
 // Webhook para Purchase
 export const sendPurchaseWebhook = async (leadData, purchaseData) => {
   const clientInfo = getClientInfo();
+  const webhookUrls = getWebhookUrls();
   
   const webhookData = {
     // Datos del lead
@@ -150,8 +151,10 @@ export const sendPurchaseWebhook = async (leadData, purchaseData) => {
   };
 
   try {
-    // Webhook para tu sistema
-    const response = await fetch('/api/webhooks/purchase', {
+    // Usar la URL configurada para purchase
+    const webhookUrl = buildWebhookUrl(webhookUrls.purchase);
+    
+    const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -159,12 +162,13 @@ export const sendPurchaseWebhook = async (leadData, purchaseData) => {
       body: JSON.stringify(webhookData)
     });
 
-    console.log('✅ Purchase webhook enviado:', webhookData);
-    return { success: true, data: webhookData };
+    console.log('✅ Purchase webhook enviado a:', webhookUrl);
+    console.log('📤 Datos enviados:', webhookData);
+    return { success: true, data: webhookData, url: webhookUrl };
     
   } catch (error) {
     console.error('❌ Error enviando purchase webhook:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: error.message, url: webhookUrls.purchase };
   }
 };
 
