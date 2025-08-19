@@ -91,36 +91,24 @@ export const sendLeadCaptureWebhook = async (leadData, quizAnswers) => {
 
   try {
     // Usar la URL configurada para lead capture
+    const webhookUrls = getWebhookUrls();
     const webhookUrl = buildWebhookUrl(webhookUrls.leadCapture);
     
-    // Determinar si es URL externa para configurar CORS
-    const isExternalUrl = webhookUrl.startsWith('http://') || webhookUrl.startsWith('https://');
-    const fetchOptions = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(webhookData)
-    };
-
-    // Para URLs externas, usar mode: 'no-cors' para evitar problemas de CORS
-    if (isExternalUrl && !webhookUrl.includes(window.location.hostname)) {
-      fetchOptions.mode = 'no-cors';
-      console.log('🌐 Enviando a webhook externo (modo no-cors):', webhookUrl);
-    }
-
-    const response = await fetch(webhookUrl, fetchOptions);
-
-    console.log('✅ Lead capture webhook enviado a:', webhookUrl);
-    console.log('📤 Datos enviados:', webhookData);
+    console.log('📤 Enviando lead capture webhook a:', webhookUrl);
+    console.log('📄 Datos:', webhookData);
     
-    // En modo no-cors no podemos leer la respuesta, pero el webhook se envió
-    if (fetchOptions.mode === 'no-cors') {
-      console.log('ℹ️ Webhook externo enviado (respuesta no accesible por CORS)');
-      return { success: true, data: webhookData, url: webhookUrl, mode: 'no-cors' };
-    }
+    // Usar función con proxy automático
+    const response = await sendWebhookWithProxy(webhookUrl, webhookData);
     
-    return { success: true, data: webhookData, url: webhookUrl };
+    if (response.ok) {
+      const result = await response.json();
+      console.log('✅ Lead capture webhook enviado exitosamente');
+      console.log('📥 Respuesta:', result);
+      return { success: true, data: webhookData, url: webhookUrl, response: result };
+    } else {
+      console.error('❌ Error en respuesta del webhook:', response.status, response.statusText);
+      return { success: false, error: `HTTP ${response.status}: ${response.statusText}`, url: webhookUrl };
+    }
     
   } catch (error) {
     console.error('❌ Error enviando lead capture webhook:', error);
