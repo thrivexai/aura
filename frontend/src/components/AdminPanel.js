@@ -819,6 +819,20 @@ const AdminPanel = () => {
                         </ul>
                       </div>
                     )}
+
+                    {!editingWebhooks && (
+                      <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                          <p className="text-sm font-medium text-green-700">Estado Actual de Webhooks</p>
+                        </div>
+                        <div className="text-xs text-green-600 space-y-1">
+                          <p>✅ Configuración guardada y activa</p>
+                          <p>✅ Todos los formularios usarán estas URLs</p>
+                          <p>🔄 Cambios se aplican inmediatamente</p>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
