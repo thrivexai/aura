@@ -55,6 +55,7 @@ const generateSessionId = () => {
 // Webhook para Lead Capture (InitiateCheckout)
 export const sendLeadCaptureWebhook = async (leadData, quizAnswers) => {
   const clientInfo = getClientInfo();
+  const webhookUrls = getWebhookUrls();
   
   const webhookData = {
     // Datos del lead
@@ -89,8 +90,10 @@ export const sendLeadCaptureWebhook = async (leadData, quizAnswers) => {
   };
 
   try {
-    // Webhook para tu sistema
-    const response = await fetch('/api/webhooks/lead-capture', {
+    // Usar la URL configurada para lead capture
+    const webhookUrl = buildWebhookUrl(webhookUrls.leadCapture);
+    
+    const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -98,12 +101,13 @@ export const sendLeadCaptureWebhook = async (leadData, quizAnswers) => {
       body: JSON.stringify(webhookData)
     });
 
-    console.log('✅ Lead capture webhook enviado:', webhookData);
-    return { success: true, data: webhookData };
+    console.log('✅ Lead capture webhook enviado a:', webhookUrl);
+    console.log('📤 Datos enviados:', webhookData);
+    return { success: true, data: webhookData, url: webhookUrl };
     
   } catch (error) {
     console.error('❌ Error enviando lead capture webhook:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: error.message, url: webhookUrls.leadCapture };
   }
 };
 
