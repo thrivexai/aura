@@ -67,6 +67,45 @@ const AdminPanel = () => {
     });
   };
 
+  const handleEditWebhooks = () => {
+    setEditingWebhooks(true);
+    setTempWebhookUrls({ ...webhookUrls });
+  };
+
+  const handleSaveWebhooks = () => {
+    // Validar URLs
+    const isValidUrl = (url) => {
+      try {
+        // Permitir URLs relativas (que empiecen con /) o URLs completas
+        return url.startsWith('/') || url.startsWith('http://') || url.startsWith('https://');
+      } catch {
+        return false;
+      }
+    };
+
+    if (!isValidUrl(tempWebhookUrls.leadCapture) || !isValidUrl(tempWebhookUrls.purchase)) {
+      alert('Por favor ingresa URLs válidas. Deben empezar con /, http:// o https://');
+      return;
+    }
+
+    setWebhookUrls({ ...tempWebhookUrls });
+    localStorage.setItem('aura_webhook_urls', JSON.stringify(tempWebhookUrls));
+    setEditingWebhooks(false);
+    
+    trackEvent('webhook_urls_updated', {
+      lead_capture_url: tempWebhookUrls.leadCapture,
+      purchase_url: tempWebhookUrls.purchase
+    });
+
+    // Mostrar mensaje de éxito
+    alert('URLs de webhook actualizadas correctamente');
+  };
+
+  const handleCancelEdit = () => {
+    setTempWebhookUrls({ ...webhookUrls });
+    setEditingWebhooks(false);
+  };
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
