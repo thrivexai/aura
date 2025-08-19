@@ -106,6 +106,18 @@ const AdminPanel = () => {
   };
 
   useEffect(() => {
+    // Cargar URLs de webhook guardadas
+    const savedWebhooks = localStorage.getItem('aura_webhook_urls');
+    if (savedWebhooks) {
+      try {
+        const parsed = JSON.parse(savedWebhooks);
+        setWebhookUrls(parsed);
+        setTempWebhookUrls(parsed);
+      } catch (e) {
+        console.error('Error parsing saved webhook URLs:', e);
+      }
+    }
+
     fetchData();
     trackEvent('admin_panel_view', {
       admin_user: 'admin',
