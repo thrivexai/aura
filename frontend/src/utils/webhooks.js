@@ -1,4 +1,5 @@
 // Utilidades para webhooks y tracking de Facebook/Meta
+import { getWebhookUrls, buildWebhookUrl } from './webhookConfig';
 
 // Función para obtener información del cliente
 export const getClientInfo = () => {
