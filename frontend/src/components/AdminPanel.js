@@ -43,6 +43,12 @@ const AdminPanel = () => {
     businessType: 'all',
     dateRange: '7d'
   });
+  const [webhookUrls, setWebhookUrls] = useState({
+    leadCapture: '/api/webhooks/lead-capture',
+    purchase: '/api/webhooks/purchase'
+  });
+  const [editingWebhooks, setEditingWebhooks] = useState(false);
+  const [tempWebhookUrls, setTempWebhookUrls] = useState({ ...webhookUrls });
 
   const [leadDetails, setLeadDetails] = useState(null);
   const [showModal, setShowModal] = useState(false);
