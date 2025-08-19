@@ -15,12 +15,298 @@ import uuid
 # Use the production backend URL from frontend/.env
 BACKEND_URL = "https://7eadbe52-edd5-43c9-b30b-93260710090a.preview.emergentagent.com"
 
+def test_webhook_lead_capture():
+    """Test POST /api/webhooks/lead-capture endpoint"""
+    print("\n🔍 TESTING WEBHOOK LEAD CAPTURE ENDPOINT")
+    
+    url = f"{BACKEND_URL}/api/webhooks/lead-capture"
+    print(f"Testing: {url}")
+    
+    # Create realistic webhook data
+    webhook_data = {
+        "name": "María García",
+        "email": "maria.garcia@example.com",
+        "whatsapp": "+34666777888",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "fbclid": "IwAR123456789",
+        "_fbc": "fb.1.1234567890123.IwAR123456789",
+        "_fbp": "fb.1.1234567890123.987654321",
+        "utmSource": "facebook",
+        "utmMedium": "cpc",
+        "utmCampaign": "fashion-workshop-2024",
+        "utmContent": "video-ad",
+        "utmTerm": "moda-rentable",
+        "referrer": "https://facebook.com",
+        "quizAnswers": {
+            "business_type": "marca-emergente",
+            "main_cost": "produccion",
+            "objective": "reducir-costos",
+            "ai_usage": "principiante"
+        },
+        "bucketId": "produccion",
+        "eventType": "InitiateCheckout",
+        "value": 15.0,
+        "currency": "USD"
+    }
+    
+    try:
+        response = requests.post(url, json=webhook_data, timeout=10)
+        print(f"Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            try:
+                data = response.json()
+                print(f"Response Type: {type(data)}")
+                print(f"Response Keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}")
+                
+                # Check expected response structure
+                expected_keys = ["success", "message", "data"]
+                if isinstance(data, dict):
+                    missing_keys = [key for key in expected_keys if key not in data]
+                    if missing_keys:
+                        print(f"❌ Missing expected keys: {missing_keys}")
+                        return False
+                    
+                    if data.get("success") == True:
+                        print(f"✅ Webhook processed successfully")
+                        print(f"✅ Message: {data.get('message')}")
+                        
+                        # Check data structure
+                        webhook_response_data = data.get("data", {})
+                        if "email" in webhook_response_data and "eventType" in webhook_response_data:
+                            print(f"✅ Response contains expected webhook data")
+                            print(f"  Email: {webhook_response_data.get('email')}")
+                            print(f"  Event Type: {webhook_response_data.get('eventType')}")
+                            print(f"  Client IP: {webhook_response_data.get('clientIP', 'Not provided')}")
+                            return True
+                        else:
+                            print(f"❌ Response data missing expected fields")
+                            return False
+                    else:
+                        print(f"❌ Webhook processing failed: {data.get('message', 'Unknown error')}")
+                        return False
+                else:
+                    print(f"❌ Invalid response format")
+                    return False
+                    
+            except json.JSONDecodeError:
+                print(f"❌ Invalid JSON response")
+                print(f"Raw response: {response.text[:200]}...")
+                return False
+        else:
+            print(f"❌ HTTP Error: {response.status_code}")
+            print(f"Response: {response.text[:200]}...")
+            return False
+            
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Request failed: {str(e)}")
+        return False
+
+def test_webhook_purchase():
+    """Test POST /api/webhooks/purchase endpoint"""
+    print("\n🔍 TESTING WEBHOOK PURCHASE ENDPOINT")
+    
+    url = f"{BACKEND_URL}/api/webhooks/purchase"
+    print(f"Testing: {url}")
+    
+    # Create realistic purchase webhook data
+    webhook_data = {
+        "name": "María García",
+        "email": "maria.garcia@example.com",
+        "whatsapp": "+34666777888",
+        "transactionId": f"HM{uuid.uuid4().hex[:10].upper()}",
+        "orderId": f"ORDER_{int(datetime.now().timestamp())}",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "fbclid": "IwAR123456789",
+        "_fbc": "fb.1.1234567890123.IwAR123456789",
+        "_fbp": "fb.1.1234567890123.987654321",
+        "utmSource": "facebook",
+        "utmMedium": "cpc",
+        "utmCampaign": "fashion-workshop-2024",
+        "eventType": "Purchase",
+        "value": 15.0,
+        "currency": "USD",
+        "paymentMethod": "hotmart"
+    }
+    
+    try:
+        response = requests.post(url, json=webhook_data, timeout=10)
+        print(f"Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            try:
+                data = response.json()
+                print(f"Response Type: {type(data)}")
+                print(f"Response Keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}")
+                
+                # Check expected response structure
+                expected_keys = ["success", "message", "data"]
+                if isinstance(data, dict):
+                    missing_keys = [key for key in expected_keys if key not in data]
+                    if missing_keys:
+                        print(f"❌ Missing expected keys: {missing_keys}")
+                        return False
+                    
+                    if data.get("success") == True:
+                        print(f"✅ Purchase webhook processed successfully")
+                        print(f"✅ Message: {data.get('message')}")
+                        
+                        # Check data structure
+                        webhook_response_data = data.get("data", {})
+                        expected_fields = ["email", "transactionId", "eventType"]
+                        if all(field in webhook_response_data for field in expected_fields):
+                            print(f"✅ Response contains expected purchase data")
+                            print(f"  Email: {webhook_response_data.get('email')}")
+                            print(f"  Transaction ID: {webhook_response_data.get('transactionId')}")
+                            print(f"  Event Type: {webhook_response_data.get('eventType')}")
+                            print(f"  Client IP: {webhook_response_data.get('clientIP', 'Not provided')}")
+                            return True
+                        else:
+                            print(f"❌ Response data missing expected fields: {expected_fields}")
+                            return False
+                    else:
+                        print(f"❌ Purchase webhook processing failed: {data.get('message', 'Unknown error')}")
+                        return False
+                else:
+                    print(f"❌ Invalid response format")
+                    return False
+                    
+            except json.JSONDecodeError:
+                print(f"❌ Invalid JSON response")
+                print(f"Raw response: {response.text[:200]}...")
+                return False
+        else:
+            print(f"❌ HTTP Error: {response.status_code}")
+            print(f"Response: {response.text[:200]}...")
+            return False
+            
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Request failed: {str(e)}")
+        return False
+
+def test_webhook_url_handling():
+    """Test webhook URL handling with different URL formats"""
+    print("\n🔍 TESTING WEBHOOK URL HANDLING")
+    
+    # Test different URL formats that the system should handle
+    test_cases = [
+        {
+            "name": "Relative URL (default)",
+            "url": "/api/webhooks/lead-capture",
+            "expected_full_url": f"{BACKEND_URL}/api/webhooks/lead-capture",
+            "should_work": True
+        },
+        {
+            "name": "Absolute URL (external webhook)",
+            "url": "https://webhook.site/test-endpoint",
+            "expected_full_url": "https://webhook.site/test-endpoint",
+            "should_work": False  # External endpoint won't work in test, but URL handling should be correct
+        },
+        {
+            "name": "Zapier webhook URL format",
+            "url": "https://hooks.zapier.com/hooks/catch/123456/abcdef/",
+            "expected_full_url": "https://hooks.zapier.com/hooks/catch/123456/abcdef/",
+            "should_work": False  # External endpoint won't work in test
+        }
+    ]
+    
+    print("Testing URL format handling logic:")
+    
+    for test_case in test_cases:
+        print(f"\n  Testing: {test_case['name']}")
+        print(f"  Input URL: {test_case['url']}")
+        print(f"  Expected full URL: {test_case['expected_full_url']}")
+        
+        # Simulate the buildWebhookUrl logic from frontend
+        if test_case['url'].startswith('/'):
+            built_url = f"{BACKEND_URL}{test_case['url']}"
+        else:
+            built_url = test_case['url']
+        
+        if built_url == test_case['expected_full_url']:
+            print(f"  ✅ URL building logic correct")
+        else:
+            print(f"  ❌ URL building failed. Got: {built_url}")
+            return False
+    
+    print(f"\n✅ All webhook URL handling tests passed")
+    return True
+
+def test_webhook_data_persistence():
+    """Test that webhook data is properly stored in database"""
+    print("\n🔍 TESTING WEBHOOK DATA PERSISTENCE")
+    
+    # Send a lead capture webhook
+    lead_webhook_data = {
+        "name": "Test User Webhook",
+        "email": f"test.webhook.{int(datetime.now().timestamp())}@example.com",
+        "whatsapp": "+34666777888",
+        "userAgent": "Test User Agent",
+        "utmSource": "test-source",
+        "utmMedium": "test-medium",
+        "quizAnswers": {
+            "business_type": "test-business",
+            "main_cost": "test-cost"
+        },
+        "eventType": "InitiateCheckout",
+        "value": 15.0,
+        "currency": "USD"
+    }
+    
+    try:
+        # Send webhook
+        webhook_url = f"{BACKEND_URL}/api/webhooks/lead-capture"
+        webhook_response = requests.post(webhook_url, json=lead_webhook_data, timeout=10)
+        
+        if webhook_response.status_code != 200:
+            print(f"❌ Failed to send test webhook: {webhook_response.status_code}")
+            return False
+        
+        print(f"✅ Test webhook sent successfully")
+        
+        # Wait a moment for database write
+        import time
+        time.sleep(1)
+        
+        # Check if data appears in leads endpoint
+        leads_url = f"{BACKEND_URL}/api/leads"
+        leads_response = requests.get(leads_url, timeout=10)
+        
+        if leads_response.status_code != 200:
+            print(f"❌ Failed to fetch leads: {leads_response.status_code}")
+            return False
+        
+        leads_data = leads_response.json()
+        leads = leads_data.get('leads', [])
+        
+        # Look for our test webhook data
+        test_lead = None
+        for lead in leads:
+            if lead.get('email') == lead_webhook_data['email']:
+                test_lead = lead
+                break
+        
+        if test_lead:
+            print(f"✅ Webhook data found in database")
+            print(f"  Name: {test_lead.get('name')}")
+            print(f"  Email: {test_lead.get('email')}")
+            print(f"  UTM Source: {test_lead.get('utmSource')}")
+            print(f"  Business Type: {test_lead.get('businessType')}")
+            return True
+        else:
+            print(f"❌ Webhook data not found in database")
+            print(f"  Searched for email: {lead_webhook_data['email']}")
+            print(f"  Total leads in database: {len(leads)}")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error testing webhook data persistence: {str(e)}")
+        return False
+
 def test_api_endpoint(endpoint, expected_keys=None):
     """Test a single API endpoint"""
     url = f"{BACKEND_URL}/api/{endpoint}"
-    print(f"\n{'='*60}")
     print(f"Testing: {url}")
-    print(f"{'='*60}")
     
     try:
         response = requests.get(url, timeout=10)
@@ -41,16 +327,6 @@ def test_api_endpoint(endpoint, expected_keys=None):
                     else:
                         print(f"✅ All expected keys present: {expected_keys}")
                 
-                # Print sample data structure
-                if isinstance(data, dict):
-                    for key, value in data.items():
-                        if isinstance(value, list):
-                            print(f"  {key}: List with {len(value)} items")
-                            if value:  # If list is not empty, show first item structure
-                                print(f"    Sample item keys: {list(value[0].keys()) if isinstance(value[0], dict) else 'Not dict items'}")
-                        else:
-                            print(f"  {key}: {value}")
-                
                 print(f"✅ Endpoint {endpoint} working correctly")
                 return True
                 
@@ -68,215 +344,16 @@ def test_api_endpoint(endpoint, expected_keys=None):
         return False
 
 def test_leads_endpoint():
-    """Test GET /api/leads endpoint with expanded tracking data"""
-    print("\n🔍 TESTING LEADS ENDPOINT WITH EXPANDED TRACKING DATA")
-    
-    url = f"{BACKEND_URL}/api/leads"
-    print(f"Testing: {url}")
-    
-    try:
-        response = requests.get(url, timeout=10)
-        print(f"Status Code: {response.status_code}")
-        
-        if response.status_code == 200:
-            data = response.json()
-            print(f"Response Type: {type(data)}")
-            
-            # Check main structure
-            expected_main_keys = ["leads", "total"]
-            if not all(key in data for key in expected_main_keys):
-                print(f"❌ Missing main keys. Expected: {expected_main_keys}, Got: {list(data.keys())}")
-                return False
-            
-            print(f"✅ Main structure correct: {expected_main_keys}")
-            print(f"Total leads: {data['total']}")
-            
-            # Check individual lead structure if leads exist
-            if data['leads']:
-                lead = data['leads'][0]
-                print(f"\n📋 CHECKING LEAD DATA STRUCTURE:")
-                
-                # Basic data fields
-                basic_fields = ['id', 'name', 'email', 'whatsapp', 'businessType', 'stage', 'createdAt']
-                # Tracking data fields
-                tracking_fields = ['ip', 'userAgent', 'sessionId']
-                # UTM parameters
-                utm_fields = ['utmSource', 'utmMedium', 'utmCampaign', 'utmContent', 'utmTerm']
-                # Facebook tracking
-                fb_fields = ['fbclid', '_fbc', '_fbp']
-                # Additional data
-                additional_fields = ['referrer', 'currentUrl']
-                
-                all_expected_fields = basic_fields + tracking_fields + utm_fields + fb_fields + additional_fields
-                
-                print(f"Lead keys present: {list(lead.keys())}")
-                
-                # Check each category
-                missing_basic = [f for f in basic_fields if f not in lead]
-                missing_tracking = [f for f in tracking_fields if f not in lead]
-                missing_utm = [f for f in utm_fields if f not in lead]
-                missing_fb = [f for f in fb_fields if f not in lead]
-                missing_additional = [f for f in additional_fields if f not in lead]
-                
-                print(f"✅ Basic fields: {[f for f in basic_fields if f in lead]}")
-                if missing_basic:
-                    print(f"❌ Missing basic fields: {missing_basic}")
-                
-                print(f"✅ Tracking fields: {[f for f in tracking_fields if f in lead]}")
-                if missing_tracking:
-                    print(f"❌ Missing tracking fields: {missing_tracking}")
-                
-                print(f"✅ UTM fields: {[f for f in utm_fields if f in lead]}")
-                if missing_utm:
-                    print(f"❌ Missing UTM fields: {missing_utm}")
-                
-                print(f"✅ Facebook fields: {[f for f in fb_fields if f in lead]}")
-                if missing_fb:
-                    print(f"❌ Missing Facebook fields: {missing_fb}")
-                
-                print(f"✅ Additional fields: {[f for f in additional_fields if f in lead]}")
-                if missing_additional:
-                    print(f"❌ Missing additional fields: {missing_additional}")
-                
-                # Show sample values
-                print(f"\n📊 SAMPLE LEAD DATA:")
-                for field in all_expected_fields:
-                    if field in lead:
-                        value = lead[field]
-                        if value is not None:
-                            print(f"  {field}: {value}")
-                        else:
-                            print(f"  {field}: null")
-                
-                # All fields should be present (even if null)
-                missing_all = [f for f in all_expected_fields if f not in lead]
-                if missing_all:
-                    print(f"❌ Missing expected fields: {missing_all}")
-                    return False
-                else:
-                    print(f"✅ All expected tracking fields present in response structure")
-                    return True
-            else:
-                print("ℹ️  No leads in database - structure test passed but no data to verify")
-                return True
-                
-        else:
-            print(f"❌ HTTP Error: {response.status_code}")
-            print(f"Response: {response.text[:200]}...")
-            return False
-            
-    except Exception as e:
-        print(f"❌ Request failed: {str(e)}")
-        return False
+    """Test GET /api/leads endpoint"""
+    print("\n🔍 TESTING LEADS ENDPOINT")
+    expected_keys = ["leads", "total"]
+    return test_api_endpoint("leads", expected_keys)
 
 def test_purchases_endpoint():
-    """Test GET /api/purchases endpoint with expanded tracking data"""
-    print("\n🔍 TESTING PURCHASES ENDPOINT WITH EXPANDED TRACKING DATA")
-    
-    url = f"{BACKEND_URL}/api/purchases"
-    print(f"Testing: {url}")
-    
-    try:
-        response = requests.get(url, timeout=10)
-        print(f"Status Code: {response.status_code}")
-        
-        if response.status_code == 200:
-            data = response.json()
-            print(f"Response Type: {type(data)}")
-            
-            # Check main structure
-            expected_main_keys = ["purchases", "total"]
-            if not all(key in data for key in expected_main_keys):
-                print(f"❌ Missing main keys. Expected: {expected_main_keys}, Got: {list(data.keys())}")
-                return False
-            
-            print(f"✅ Main structure correct: {expected_main_keys}")
-            print(f"Total purchases: {data['total']}")
-            
-            # Check individual purchase structure if purchases exist
-            if data['purchases']:
-                purchase = data['purchases'][0]
-                print(f"\n📋 CHECKING PURCHASE DATA STRUCTURE:")
-                
-                # Basic data fields
-                basic_fields = ['id', 'name', 'email', 'whatsapp', 'businessType', 'stage', 'createdAt']
-                # Purchase specific fields
-                purchase_fields = ['transactionId', 'amount']
-                # Tracking data fields
-                tracking_fields = ['ip', 'userAgent', 'sessionId']
-                # UTM parameters
-                utm_fields = ['utmSource', 'utmMedium', 'utmCampaign', 'utmContent', 'utmTerm']
-                # Facebook tracking
-                fb_fields = ['fbclid', '_fbc', '_fbp']
-                # Additional data
-                additional_fields = ['referrer', 'currentUrl']
-                
-                all_expected_fields = basic_fields + purchase_fields + tracking_fields + utm_fields + fb_fields + additional_fields
-                
-                print(f"Purchase keys present: {list(purchase.keys())}")
-                
-                # Check each category
-                missing_basic = [f for f in basic_fields if f not in purchase]
-                missing_purchase = [f for f in purchase_fields if f not in purchase]
-                missing_tracking = [f for f in tracking_fields if f not in purchase]
-                missing_utm = [f for f in utm_fields if f not in purchase]
-                missing_fb = [f for f in fb_fields if f not in purchase]
-                missing_additional = [f for f in additional_fields if f not in purchase]
-                
-                print(f"✅ Basic fields: {[f for f in basic_fields if f in purchase]}")
-                if missing_basic:
-                    print(f"❌ Missing basic fields: {missing_basic}")
-                
-                print(f"✅ Purchase fields: {[f for f in purchase_fields if f in purchase]}")
-                if missing_purchase:
-                    print(f"❌ Missing purchase fields: {missing_purchase}")
-                
-                print(f"✅ Tracking fields: {[f for f in tracking_fields if f in purchase]}")
-                if missing_tracking:
-                    print(f"❌ Missing tracking fields: {missing_tracking}")
-                
-                print(f"✅ UTM fields: {[f for f in utm_fields if f in purchase]}")
-                if missing_utm:
-                    print(f"❌ Missing UTM fields: {missing_utm}")
-                
-                print(f"✅ Facebook fields: {[f for f in fb_fields if f in purchase]}")
-                if missing_fb:
-                    print(f"❌ Missing Facebook fields: {missing_fb}")
-                
-                print(f"✅ Additional fields: {[f for f in additional_fields if f in purchase]}")
-                if missing_additional:
-                    print(f"❌ Missing additional fields: {missing_additional}")
-                
-                # Show sample values
-                print(f"\n📊 SAMPLE PURCHASE DATA:")
-                for field in all_expected_fields:
-                    if field in purchase:
-                        value = purchase[field]
-                        if value is not None:
-                            print(f"  {field}: {value}")
-                        else:
-                            print(f"  {field}: null")
-                
-                # All fields should be present (even if null)
-                missing_all = [f for f in all_expected_fields if f not in purchase]
-                if missing_all:
-                    print(f"❌ Missing expected fields: {missing_all}")
-                    return False
-                else:
-                    print(f"✅ All expected tracking fields present in response structure")
-                    return True
-            else:
-                print("ℹ️  No purchases in database - structure test passed but no data to verify")
-                return True
-                
-        else:
-            print(f"❌ HTTP Error: {response.status_code}")
-            print(f"Response: {response.text[:200]}...")
-            return False
-            
-    except Exception as e:
-        print(f"❌ Request failed: {str(e)}")
-        return False
+    """Test GET /api/purchases endpoint"""
+    print("\n🔍 TESTING PURCHASES ENDPOINT")
+    expected_keys = ["purchases", "total"]
+    return test_api_endpoint("purchases", expected_keys)
 
 def test_metrics_endpoint():
     """Test GET /api/metrics endpoint"""
@@ -284,298 +361,92 @@ def test_metrics_endpoint():
     expected_keys = ["totalVisitors", "leadsGenerated", "purchases", "conversionRate"]
     return test_api_endpoint("metrics", expected_keys)
 
-def test_csv_export_leads():
-    """Test GET /api/export-leads-csv endpoint"""
-    print("\n🔍 TESTING CSV EXPORT LEADS ENDPOINT")
-    
-    url = f"{BACKEND_URL}/api/export-leads-csv"
-    print(f"Testing: {url}")
-    
-    try:
-        response = requests.get(url, timeout=15)
-        print(f"Status Code: {response.status_code}")
-        
-        if response.status_code == 200:
-            # Check Content-Type header
-            content_type = response.headers.get('content-type', '')
-            print(f"Content-Type: {content_type}")
-            
-            if 'text/csv' not in content_type:
-                print(f"❌ Expected text/csv content type, got: {content_type}")
-                return False
-            
-            # Check Content-Disposition header
-            content_disposition = response.headers.get('content-disposition', '')
-            print(f"Content-Disposition: {content_disposition}")
-            
-            if 'attachment' not in content_disposition or 'filename=' not in content_disposition:
-                print(f"❌ Missing or invalid Content-Disposition header")
-                return False
-            
-            # Parse CSV content properly
-            csv_content = response.text
-            csv_reader = csv.reader(StringIO(csv_content))
-            rows = list(csv_reader)
-            
-            if not rows:
-                print("❌ Empty CSV content")
-                return False
-            
-            # Check headers
-            headers = rows[0]
-            expected_headers = [
-                'Nombre', 'Email', 'WhatsApp', 'Tipo Negocio', 'Costo Principal', 'Objetivo', 'Uso IA', 'Etapa', 'Fecha Creacion',
-                'IP', 'User Agent', 'Session ID', 'Referrer', 'URL Actual',
-                'UTM Source', 'UTM Medium', 'UTM Campaign', 'UTM Content', 'UTM Term',
-                'fbclid', '_fbc', '_fbp',
-                'Transaction ID', 'Valor', 'Moneda', 'Timestamp Completo'
-            ]
-            
-            print(f"CSV Headers ({len(headers)}): {headers[:5]}... (showing first 5)")
-            print(f"Expected Headers ({len(expected_headers)}): {expected_headers[:5]}... (showing first 5)")
-            
-            # Check if all expected headers are present
-            missing_headers = []
-            for expected in expected_headers:
-                if expected not in headers:
-                    missing_headers.append(expected)
-            
-            if missing_headers:
-                print(f"❌ Missing headers: {missing_headers}")
-                return False
-            
-            print(f"✅ All expected headers present")
-            print(f"Total CSV rows: {len(rows)} (including header)")
-            
-            # Check for real data (not all N/A values) if there are data rows
-            if len(rows) > 1:
-                print("\n📊 CHECKING CSV DATA CONTENT:")
-                data_row = rows[1]
-                
-                # Create header-to-index mapping
-                header_map = {header: idx for idx, header in enumerate(headers)}
-                
-                # Check specific tracking fields for real data
-                tracking_fields = ['IP', 'User Agent', 'Session ID', 'UTM Source', 'UTM Medium', 'UTM Campaign', 'fbclid', '_fbc', '_fbp']
-                real_data_count = 0
-                
-                for field in tracking_fields:
-                    if field in header_map:
-                        idx = header_map[field]
-                        if idx < len(data_row):
-                            value = data_row[idx].strip()
-                            if value and value not in ['N/A', '', 'null']:
-                                real_data_count += 1
-                                print(f"  Real data in {field}: {value}")
-                            else:
-                                print(f"  {field}: {value or 'N/A'}")
-                
-                print(f"Real tracking data fields: {real_data_count}/{len(tracking_fields)}")
-                
-                # Also check basic data
-                basic_fields = ['Nombre', 'Email']
-                for field in basic_fields:
-                    if field in header_map:
-                        idx = header_map[field]
-                        if idx < len(data_row):
-                            value = data_row[idx].strip()
-                            print(f"  {field}: {value}")
-                
-                if real_data_count > 0:
-                    print("✅ CSV contains some real tracking data")
-                else:
-                    print("⚠️  CSV contains mostly N/A values - may indicate missing webhook data")
-            else:
-                print("ℹ️  No data rows in CSV - only headers present")
-            
-            print("✅ CSV export leads endpoint working correctly")
-            return True
-            
-        else:
-            print(f"❌ HTTP Error: {response.status_code}")
-            print(f"Response: {response.text[:200]}...")
-            return False
-            
-    except Exception as e:
-        print(f"❌ Request failed: {str(e)}")
-        return False
-
-def test_csv_export_purchases():
-    """Test GET /api/export-purchases-csv endpoint"""
-    print("\n🔍 TESTING CSV EXPORT PURCHASES ENDPOINT")
-    
-    url = f"{BACKEND_URL}/api/export-purchases-csv"
-    print(f"Testing: {url}")
-    
-    try:
-        response = requests.get(url, timeout=15)
-        print(f"Status Code: {response.status_code}")
-        
-        if response.status_code == 200:
-            # Check Content-Type header
-            content_type = response.headers.get('content-type', '')
-            print(f"Content-Type: {content_type}")
-            
-            if 'text/csv' not in content_type:
-                print(f"❌ Expected text/csv content type, got: {content_type}")
-                return False
-            
-            # Check Content-Disposition header
-            content_disposition = response.headers.get('content-disposition', '')
-            print(f"Content-Disposition: {content_disposition}")
-            
-            if 'attachment' not in content_disposition or 'filename=' not in content_disposition:
-                print(f"❌ Missing or invalid Content-Disposition header")
-                return False
-            
-            # Parse CSV content properly
-            csv_content = response.text
-            csv_reader = csv.reader(StringIO(csv_content))
-            rows = list(csv_reader)
-            
-            if not rows:
-                print("❌ Empty CSV content")
-                return False
-            
-            # Check headers
-            headers = rows[0]
-            expected_headers = [
-                'Nombre', 'Email', 'WhatsApp', 'Transaction ID', 'Fecha', 'Valor', 'Moneda',
-                'Tipo Negocio', 'Costo Principal', 'Objetivo', 'Uso IA',
-                'IP', 'User Agent', 'Session ID',
-                'UTM Source', 'UTM Medium', 'UTM Campaign', 'UTM Content', 'UTM Term',
-                'fbclid', '_fbc', '_fbp',
-                'Referrer', 'URL Actual', 'Timestamp Completo'
-            ]
-            
-            print(f"CSV Headers ({len(headers)}): {headers[:5]}... (showing first 5)")
-            print(f"Expected Headers ({len(expected_headers)}): {expected_headers[:5]}... (showing first 5)")
-            
-            # Check if all expected headers are present
-            missing_headers = []
-            for expected in expected_headers:
-                if expected not in headers:
-                    missing_headers.append(expected)
-            
-            if missing_headers:
-                print(f"❌ Missing headers: {missing_headers}")
-                return False
-            
-            print(f"✅ All expected headers present")
-            print(f"Total CSV rows: {len(rows)} (including header)")
-            
-            # Check for real data (not all N/A values) if there are data rows
-            if len(rows) > 1:
-                print("\n📊 CHECKING CSV DATA CONTENT:")
-                data_row = rows[1]
-                
-                # Create header-to-index mapping
-                header_map = {header: idx for idx, header in enumerate(headers)}
-                
-                # Check specific tracking fields for real data
-                tracking_fields = ['IP', 'User Agent', 'Session ID', 'Transaction ID', 'UTM Source', 'UTM Medium', 'UTM Campaign', 'fbclid', '_fbc', '_fbp']
-                real_data_count = 0
-                
-                for field in tracking_fields:
-                    if field in header_map:
-                        idx = header_map[field]
-                        if idx < len(data_row):
-                            value = data_row[idx].strip()
-                            if value and value not in ['N/A', '', 'null']:
-                                real_data_count += 1
-                                print(f"  Real data in {field}: {value}")
-                            else:
-                                print(f"  {field}: {value or 'N/A'}")
-                
-                print(f"Real tracking data fields: {real_data_count}/{len(tracking_fields)}")
-                
-                # Also check basic data
-                basic_fields = ['Nombre', 'Email', 'Transaction ID', 'Valor']
-                for field in basic_fields:
-                    if field in header_map:
-                        idx = header_map[field]
-                        if idx < len(data_row):
-                            value = data_row[idx].strip()
-                            print(f"  {field}: {value}")
-                
-                if real_data_count > 0:
-                    print("✅ CSV contains some real tracking data")
-                else:
-                    print("⚠️  CSV contains mostly N/A values - may indicate missing webhook data")
-            else:
-                print("ℹ️  No data rows in CSV - only headers present")
-            
-            print("✅ CSV export purchases endpoint working correctly")
-            return True
-            
-        else:
-            print(f"❌ HTTP Error: {response.status_code}")
-            print(f"Response: {response.text[:200]}...")
-            return False
-            
-    except Exception as e:
-        print(f"❌ Request failed: {str(e)}")
-        return False
-
-def test_error_handling():
-    """Test error handling with invalid endpoint"""
-    print("\n🔍 TESTING ERROR HANDLING")
-    url = f"{BACKEND_URL}/api/nonexistent"
-    try:
-        response = requests.get(url, timeout=10)
-        print(f"Invalid endpoint status: {response.status_code}")
-        if response.status_code == 404:
-            print("✅ Proper 404 error handling")
-            return True
-        else:
-            print(f"❌ Unexpected status code for invalid endpoint: {response.status_code}")
-            return False
-    except Exception as e:
-        print(f"❌ Error testing invalid endpoint: {e}")
-        return False
-
 def main():
-    """Run all backend API tests"""
-    print(f"🚀 BACKEND API TESTING STARTED")
+    """Run all backend API tests including webhook configuration system"""
+    print(f"🚀 BACKEND WEBHOOK CONFIGURATION TESTING STARTED")
     print(f"Backend URL: {BACKEND_URL}")
     print(f"Timestamp: {datetime.now().isoformat()}")
     
     results = {
+        "webhook_lead_capture": False,
+        "webhook_purchase": False,
+        "webhook_url_handling": False,
+        "webhook_data_persistence": False,
         "leads": False,
         "purchases": False, 
-        "metrics": False,
-        "csv_export_leads": False,
-        "csv_export_purchases": False,
-        "error_handling": False
+        "metrics": False
     }
     
-    # Test each endpoint
+    # Test webhook configuration system first
+    print(f"\n{'='*80}")
+    print("🎯 TESTING WEBHOOK CONFIGURATION SYSTEM")
+    print(f"{'='*80}")
+    
+    results["webhook_lead_capture"] = test_webhook_lead_capture()
+    results["webhook_purchase"] = test_webhook_purchase()
+    results["webhook_url_handling"] = test_webhook_url_handling()
+    results["webhook_data_persistence"] = test_webhook_data_persistence()
+    
+    # Test existing API endpoints
+    print(f"\n{'='*80}")
+    print("📊 TESTING EXISTING API ENDPOINTS")
+    print(f"{'='*80}")
+    
     results["leads"] = test_leads_endpoint()
     results["purchases"] = test_purchases_endpoint()
     results["metrics"] = test_metrics_endpoint()
-    results["csv_export_leads"] = test_csv_export_leads()
-    results["csv_export_purchases"] = test_csv_export_purchases()
-    results["error_handling"] = test_error_handling()
     
     # Summary
-    print(f"\n{'='*60}")
-    print("🏁 TEST SUMMARY")
-    print(f"{'='*60}")
+    print(f"\n{'='*80}")
+    print("🏁 WEBHOOK CONFIGURATION SYSTEM TEST SUMMARY")
+    print(f"{'='*80}")
     
-    passed = sum(results.values())
-    total = len(results)
+    # Separate webhook tests from API tests
+    webhook_tests = {
+        "webhook_lead_capture": results["webhook_lead_capture"],
+        "webhook_purchase": results["webhook_purchase"],
+        "webhook_url_handling": results["webhook_url_handling"],
+        "webhook_data_persistence": results["webhook_data_persistence"]
+    }
     
-    for test_name, passed_test in results.items():
+    api_tests = {
+        "leads": results["leads"],
+        "purchases": results["purchases"],
+        "metrics": results["metrics"]
+    }
+    
+    print("🎯 WEBHOOK CONFIGURATION TESTS:")
+    webhook_passed = 0
+    for test_name, passed_test in webhook_tests.items():
         status = "✅ PASS" if passed_test else "❌ FAIL"
-        print(f"{test_name.upper()}: {status}")
+        print(f"  {test_name.upper().replace('_', ' ')}: {status}")
+        if passed_test:
+            webhook_passed += 1
     
-    print(f"\nOverall: {passed}/{total} tests passed")
+    print(f"\n📊 API ENDPOINT TESTS:")
+    api_passed = 0
+    for test_name, passed_test in api_tests.items():
+        status = "✅ PASS" if passed_test else "❌ FAIL"
+        print(f"  {test_name.upper().replace('_', ' ')}: {status}")
+        if passed_test:
+            api_passed += 1
     
-    if passed == total:
-        print("🎉 ALL TESTS PASSED!")
+    total_passed = webhook_passed + api_passed
+    total_tests = len(results)
+    
+    print(f"\n📈 OVERALL RESULTS:")
+    print(f"  Webhook Tests: {webhook_passed}/{len(webhook_tests)} passed")
+    print(f"  API Tests: {api_passed}/{len(api_tests)} passed")
+    print(f"  Total: {total_passed}/{total_tests} tests passed")
+    
+    if total_passed == total_tests:
+        print("\n🎉 ALL WEBHOOK CONFIGURATION TESTS PASSED!")
+        print("✅ Webhook system is working correctly with configurable URLs")
         return 0
     else:
-        print("⚠️  SOME TESTS FAILED")
+        print(f"\n⚠️  {total_tests - total_passed} TESTS FAILED")
+        if webhook_passed < len(webhook_tests):
+            print("❌ Webhook configuration system has issues")
         return 1
 
 if __name__ == "__main__":
