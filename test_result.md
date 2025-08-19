@@ -283,6 +283,54 @@ backend:
         agent: "testing"
         comment: "CSV EXPORT PURCHASES ENDPOINT FULLY TESTED: ✅ Returns proper CSV file with text/csv content-type, ✅ Includes Content-Disposition header for download (filename=purchases_completo.csv), ✅ Contains all expected headers (25 fields including purchase and tracking data), ✅ Exports real tracking data from MongoDB including IP addresses, Transaction IDs (HM123456789), UTM Source (facebook), Facebook tracking (fbclid: 12345_test), Session IDs. Fixed field mapping issue from database fields to CSV output. CSV contains 1 purchase record with complete transaction and tracking information."
 
+  - task: "POST /api/webhooks/lead-capture endpoint"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "WEBHOOK LEAD CAPTURE ENDPOINT FULLY TESTED: ✅ Processes webhook data correctly with proper JSON response structure (success, message, data). ✅ Returns success=true with proper message and webhook data including email, eventType, and clientIP. ✅ Handles comprehensive tracking data including UTM parameters, Facebook tracking (_fbc, _fbp, fbclid), user agent, referrer, and quiz answers. ✅ Client IP tracking working (34.121.6.206). ✅ Data properly stored in MongoDB lead_webhooks collection."
+
+  - task: "POST /api/webhooks/purchase endpoint"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "WEBHOOK PURCHASE ENDPOINT FULLY TESTED: ✅ Processes purchase webhook data correctly with proper JSON response structure. ✅ Returns success=true with purchase-specific data including email, transactionId, eventType, and clientIP. ✅ Handles transaction IDs (HM814D499E60), order IDs, and payment method data. ✅ Supports comprehensive tracking data including UTM parameters and Facebook tracking. ✅ Data properly stored in MongoDB purchase_webhooks collection."
+
+  - task: "Webhook Configuration System"
+    implemented: true
+    working: true
+    file: "server.py, frontend/src/utils/webhookConfig.js, frontend/src/components/AdminPanel.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "WEBHOOK CONFIGURATION SYSTEM FULLY TESTED: ✅ System supports configurable webhook URLs stored in localStorage. ✅ Default URLs (/api/webhooks/lead-capture, /api/webhooks/purchase) working correctly. ✅ URL handling logic supports both relative URLs (starting with /) and absolute URLs (https://webhook.site/xyz, https://zapier.com/hooks/xyz). ✅ Admin panel integration allows editing and saving webhook URLs with proper validation. ✅ buildWebhookUrl function correctly constructs full URLs from relative paths using REACT_APP_BACKEND_URL. ✅ Webhook data persistence verified - data flows from webhooks to database to API endpoints correctly."
+
+  - task: "Webhook Data Persistence"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "WEBHOOK DATA PERSISTENCE FULLY TESTED: ✅ Webhook data sent to /api/webhooks/lead-capture is properly stored in MongoDB lead_webhooks collection. ✅ Data retrievable via /api/leads endpoint with proper field mapping. ✅ Test webhook with unique email (test.webhook.1755640008@example.com) successfully found in database. ✅ All tracking data including UTM parameters, business type, and user agent properly persisted. ✅ Database write operations working correctly with proper async handling."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
