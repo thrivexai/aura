@@ -1,11 +1,18 @@
 [build]
   base = "frontend"
-  command = "yarn build"
+  command = "npm run build"
   publish = "frontend/build"
+  
+[build.environment]
+  NODE_VERSION = "18"  # o la versión que estés usando
 
-# Proxy de API (si tu backend ya está desplegado afuera)
 [[redirects]]
   from = "/api/*"
   to = "https://aura.thrivesx.com/:splat"
   status = 200
   force = true
+
+# Configuración de caché
+[[caching]]
+  directory = "/node_modules"
+  paths = ["/node_modules/**", "/.cache/**"]
