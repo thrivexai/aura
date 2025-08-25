@@ -2,7 +2,6 @@ from fastapi import FastAPI, APIRouter, Request
 from fastapi.responses import Response
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
@@ -10,22 +9,26 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 import uuid
 from datetime import datetime
-
+from supabase import create_client, Client
+import asyncpg
+import json
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+# Supabase connection
+supabase_url = os.environ['SUPABASE_URL']
+supabase_key = os.environ['SUPABASE_SERVICE_ROLE_KEY']
+supabase: Client = create_client(supabase_url, supabase_key)
+
+# PostgreSQL connection for direct queries (optional, for better performance)
+DATABASE_URL = os.environ.get('SUPABASE_DB_URL')
 
 # Create the main app without a prefix
 app = FastAPI()
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
-
 
 # Define Models
 class StatusCheck(BaseModel):
@@ -74,6 +77,12 @@ class PurchaseWebhook(BaseModel):
     currency: str = "USD"
     paymentMethod: str = "hotmart"
 
+# Helper function to get database connection
+async def get_db_connection():
+    if DATABASE_URL:
+        return await asyncpg.connect(DATABASE_URL)
+    return None
+
 # Add your routes to the router instead of directly to app
 @api_router.get("/")
 async def root():
@@ -81,53 +90,75 @@ async def root():
 
 @api_router.post("/status", response_model=StatusCheck)
 async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.dict()
-    status_obj = StatusCheck(**status_dict)
-    _ = await db.status_checks.insert_one(status_obj.dict())
-    return status_obj
+    try:
+        status_obj = StatusCheck(**input.dict())
+        result = supabase.table('status_checks').insert({
+            'id': status_obj.id,
+            'client_name': status_obj.client_name,
+            'timestamp': status_obj.timestamp.isoformat()
+        }).execute()
+        
+        if result.data:
+            return status_obj
+        else:
+            raise Exception("Failed to insert status check")
+    except Exception as e:
+        print(f"Error creating status check: {e}")
+        raise
 
 @api_router.get("/status", response_model=List[StatusCheck])
 async def get_status_checks():
-    status_checks = await db.status_checks.find().to_list(1000)
-    return [StatusCheck(**status_check) for status_check in status_checks]
+    try:
+        result = supabase.table('status_checks').select('*').order('created_at', desc=True).limit(1000).execute()
+        
+        status_checks = []
+        for status_check in result.data:
+            status_checks.append(StatusCheck(
+                id=status_check['id'],
+                client_name=status_check['client_name'],
+                timestamp=datetime.fromisoformat(status_check['timestamp'].replace('Z', '+00:00'))
+            ))
+        
+        return status_checks
+    except Exception as e:
+        print(f"Error getting status checks: {e}")
+        return []
 
 @api_router.get("/leads")
 async def get_leads():
     try:
-        # Obtener datos de lead_webhooks collection
-        leads_cursor = db.lead_webhooks.find().sort("timestamp", -1).limit(100)
-        leads = []
+        # Get data from lead_webhooks table
+        result = supabase.table('lead_webhooks').select('*').order('created_at', desc=True).limit(100).execute()
         
-        async for lead in leads_cursor:
-            # Convertir ObjectId a string si existe
-            if "_id" in lead:
-                lead["_id"] = str(lead["_id"])
+        leads = []
+        for lead in result.data:
+            # Map webhook data to expected frontend format
+            quiz_answers = lead.get('quiz_answers', {}) or {}
             
-            # Mapear los datos del webhook al formato esperado por el frontend
             formatted_lead = {
-                "id": lead.get("session_id", str(lead.get("_id", ""))),
+                "id": lead.get("session_id", lead.get("id", "")),
                 "name": lead.get("name", "Sin nombre"),
                 "email": lead.get("email", "sin-email@ejemplo.com"),
                 "whatsapp": lead.get("whatsapp"),
-                "businessType": lead.get("quiz_answers", {}).get("business_type", "sin-especificar"),
-                "mainCost": lead.get("quiz_answers", {}).get("main_cost", "sin-especificar"),
-                "objective": lead.get("quiz_answers", {}).get("objective", "sin-especificar"),
-                "aiUsage": lead.get("quiz_answers", {}).get("ai_usage", "sin-especificar"),
-                "stage": "lead_capture",  # Default desde lead-capture webhook
-                "createdAt": lead.get("timestamp", datetime.utcnow().isoformat()),
-                # Datos de tracking completos
-                "ip": lead.get("ip_address"),
+                "businessType": quiz_answers.get("1", "sin-especificar") if isinstance(quiz_answers, dict) else "sin-especificar",
+                "mainCost": quiz_answers.get("3", "sin-especificar") if isinstance(quiz_answers, dict) else "sin-especificar",
+                "objective": quiz_answers.get("4", "sin-especificar") if isinstance(quiz_answers, dict) else "sin-especificar",
+                "aiUsage": quiz_answers.get("5", "sin-especificar") if isinstance(quiz_answers, dict) else "sin-especificar",
+                "stage": "lead_capture",  # Default from lead-capture webhook
+                "createdAt": lead.get("created_at", datetime.utcnow().isoformat()),
+                # Complete tracking data
+                "ip": lead.get("client_ip"),
                 "userAgent": lead.get("user_agent"),
-                "utmSource": lead.get("utm_params", {}).get("utm_source"),
-                "utmMedium": lead.get("utm_params", {}).get("utm_medium"),
-                "utmCampaign": lead.get("utm_params", {}).get("utm_campaign"),
-                "utmContent": lead.get("utm_params", {}).get("utm_content"),
-                "utmTerm": lead.get("utm_params", {}).get("utm_term"),
+                "utmSource": lead.get("utm_source"),
+                "utmMedium": lead.get("utm_medium"),
+                "utmCampaign": lead.get("utm_campaign"),
+                "utmContent": lead.get("utm_content"),
+                "utmTerm": lead.get("utm_term"),
                 # Facebook tracking
                 "fbclid": lead.get("fbclid"),
                 "_fbc": lead.get("_fbc"),
                 "_fbp": lead.get("_fbp"),
-                # Datos adicionales
+                # Additional data
                 "referrer": lead.get("referrer"),
                 "currentUrl": lead.get("current_url"),
                 "sessionId": lead.get("session_id")
@@ -142,41 +173,39 @@ async def get_leads():
 @api_router.get("/purchases")
 async def get_purchases():
     try:
-        # Obtener datos de purchase_webhooks collection
-        purchases_cursor = db.purchase_webhooks.find().sort("timestamp", -1).limit(100)
-        purchases = []
+        # Get data from purchase_webhooks table
+        result = supabase.table('purchase_webhooks').select('*').order('created_at', desc=True).limit(100).execute()
         
-        async for purchase in purchases_cursor:
-            # Convertir ObjectId a string si existe
-            if "_id" in purchase:
-                purchase["_id"] = str(purchase["_id"])
+        purchases = []
+        for purchase in result.data:
+            quiz_answers = purchase.get('quiz_answers', {}) or {}
             
             formatted_purchase = {
-                "id": purchase.get("session_id", str(purchase.get("_id", ""))),
+                "id": purchase.get("session_id", purchase.get("id", "")),
                 "name": purchase.get("name", "Sin nombre"),
                 "email": purchase.get("email", "sin-email@ejemplo.com"),
                 "whatsapp": purchase.get("whatsapp"),
-                "businessType": purchase.get("quiz_answers", {}).get("business_type", "sin-especificar"),
-                "mainCost": purchase.get("quiz_answers", {}).get("main_cost", "sin-especificar"),
-                "objective": purchase.get("quiz_answers", {}).get("objective", "sin-especificar"),
-                "aiUsage": purchase.get("quiz_answers", {}).get("ai_usage", "sin-especificar"),
+                "businessType": quiz_answers.get("1", "sin-especificar") if isinstance(quiz_answers, dict) else "sin-especificar",
+                "mainCost": quiz_answers.get("3", "sin-especificar") if isinstance(quiz_answers, dict) else "sin-especificar",
+                "objective": quiz_answers.get("4", "sin-especificar") if isinstance(quiz_answers, dict) else "sin-especificar",
+                "aiUsage": quiz_answers.get("5", "sin-especificar") if isinstance(quiz_answers, dict) else "sin-especificar",
                 "stage": "purchased",
-                "createdAt": purchase.get("timestamp", datetime.utcnow().isoformat()),
+                "createdAt": purchase.get("created_at", datetime.utcnow().isoformat()),
                 "transactionId": purchase.get("transaction_id"),
-                "amount": 15.0,  # Workshop price
-                # Datos de tracking completos
-                "ip": purchase.get("ip_address"),
+                "amount": float(purchase.get("value", 15.0)),
+                # Complete tracking data
+                "ip": purchase.get("client_ip"),
                 "userAgent": purchase.get("user_agent"),
-                "utmSource": purchase.get("utm_params", {}).get("utm_source"),
-                "utmMedium": purchase.get("utm_params", {}).get("utm_medium"),
-                "utmCampaign": purchase.get("utm_params", {}).get("utm_campaign"),
-                "utmContent": purchase.get("utm_params", {}).get("utm_content"),
-                "utmTerm": purchase.get("utm_params", {}).get("utm_term"),
+                "utmSource": purchase.get("utm_source"),
+                "utmMedium": purchase.get("utm_medium"),
+                "utmCampaign": purchase.get("utm_campaign"),
+                "utmContent": purchase.get("utm_content"),
+                "utmTerm": purchase.get("utm_term"),
                 # Facebook tracking
                 "fbclid": purchase.get("fbclid"),
                 "_fbc": purchase.get("_fbc"),
                 "_fbp": purchase.get("_fbp"),
-                # Datos adicionales
+                # Additional data
                 "referrer": purchase.get("referrer"),
                 "currentUrl": purchase.get("current_url"),
                 "sessionId": purchase.get("session_id")
@@ -191,12 +220,15 @@ async def get_purchases():
 @api_router.get("/metrics")
 async def get_metrics():
     try:
-        # Calcular métricas reales de la base de datos
-        total_leads = await db.lead_webhooks.count_documents({})
-        total_purchases = await db.purchase_webhooks.count_documents({})
+        # Calculate real metrics from database
+        leads_result = supabase.table('lead_webhooks').select('id', count='exact').execute()
+        purchases_result = supabase.table('purchase_webhooks').select('id', count='exact').execute()
         
-        # Calcular métricas básicas (puedes expandir esto con más lógica)
-        estimated_visitors = max(total_leads * 3, 100)  # Estimación basada en leads
+        total_leads = leads_result.count or 0
+        total_purchases = purchases_result.count or 0
+        
+        # Calculate basic metrics (you can expand this with more logic)
+        estimated_visitors = max(total_leads * 3, 100)  # Estimation based on leads
         conversion_rate = (total_purchases / max(total_leads, 1)) * 100 if total_leads > 0 else 0
         
         metrics = {
@@ -204,10 +236,10 @@ async def get_metrics():
             "leadsGenerated": total_leads,
             "purchases": total_purchases,
             "conversionRate": round(conversion_rate, 1),
-            "quizStarts": int(total_leads * 1.5),  # Estimación
+            "quizStarts": int(total_leads * 1.5),  # Estimation
             "quizCompletions": total_leads,
-            "diagnosisViewed": int(total_leads * 0.8),  # Estimación
-            "checkoutClicks": int(total_leads * 0.4),  # Estimación
+            "diagnosisViewed": int(total_leads * 0.8),  # Estimation
+            "checkoutClicks": int(total_leads * 0.4),  # Estimation
         }
         
         return metrics
@@ -232,8 +264,8 @@ async def export_leads_csv():
         import csv
         from io import StringIO
         
-        # Get all lead data from MongoDB
-        leads_cursor = db.lead_webhooks.find().sort("timestamp", -1)
+        # Get all lead data from Supabase
+        result = supabase.table('lead_webhooks').select('*').order('created_at', desc=True).execute()
         
         # Create CSV content
         output = StringIO()
@@ -250,36 +282,35 @@ async def export_leads_csv():
         writer.writerow(headers)
         
         # Write data rows
-        async for lead in leads_cursor:
-            quiz_answers = lead.get("quiz_answers", {})
-            utm_params = lead.get("utm_params", {})
+        for lead in result.data:
+            quiz_answers = lead.get("quiz_answers", {}) or {}
             
             row = [
                 lead.get("name", ""),
                 lead.get("email", ""),
                 lead.get("whatsapp", "N/A"),
-                quiz_answers.get("business_type", "N/A"),
-                quiz_answers.get("main_cost", "N/A"),
-                quiz_answers.get("objective", "N/A"),
-                quiz_answers.get("ai_usage", "N/A"),
+                quiz_answers.get("1", "N/A") if isinstance(quiz_answers, dict) else "N/A",
+                quiz_answers.get("3", "N/A") if isinstance(quiz_answers, dict) else "N/A",
+                quiz_answers.get("4", "N/A") if isinstance(quiz_answers, dict) else "N/A",
+                quiz_answers.get("5", "N/A") if isinstance(quiz_answers, dict) else "N/A",
                 "Captura de Lead",
-                lead.get("timestamp", "N/A"),
-                lead.get("clientIP", "N/A"),
-                lead.get("userAgent", "N/A"),
-                lead.get("id", "N/A"),  # Using document id as session ID
+                lead.get("created_at", "N/A"),
+                lead.get("client_ip", "N/A"),
+                lead.get("user_agent", "N/A"),
+                lead.get("session_id", "N/A"),
                 lead.get("referrer", "N/A"),
                 lead.get("current_url", "N/A"),
-                lead.get("utmSource", "N/A"),
-                lead.get("utmMedium", "N/A"),
-                lead.get("utmCampaign", "N/A"),
-                lead.get("utmContent", "N/A"),
-                lead.get("utmTerm", "N/A"),
+                lead.get("utm_source", "N/A"),
+                lead.get("utm_medium", "N/A"),
+                lead.get("utm_campaign", "N/A"),
+                lead.get("utm_content", "N/A"),
+                lead.get("utm_term", "N/A"),
                 lead.get("fbclid", "N/A"),
                 lead.get("_fbc", "N/A"),
                 lead.get("_fbp", "N/A"),
                 "N/A",  # Transaction ID
-                "N/A",  # Valor
-                "N/A",  # Moneda
+                lead.get("value", "N/A"),
+                lead.get("currency", "N/A"),
                 lead.get("timestamp", "N/A")
             ]
             writer.writerow(row)
@@ -341,8 +372,8 @@ async def export_purchases_csv():
         import csv
         from io import StringIO
         
-        # Get all purchase data from MongoDB
-        purchases_cursor = db.purchase_webhooks.find().sort("timestamp", -1)
+        # Get all purchase data from Supabase
+        result = supabase.table('purchase_webhooks').select('*').order('created_at', desc=True).execute()
         
         # Create CSV content
         output = StringIO()
@@ -360,30 +391,29 @@ async def export_purchases_csv():
         writer.writerow(headers)
         
         # Write data rows
-        async for purchase in purchases_cursor:
-            quiz_answers = purchase.get("quiz_answers", {})
-            utm_params = purchase.get("utm_params", {})
+        for purchase in result.data:
+            quiz_answers = purchase.get("quiz_answers", {}) or {}
             
             row = [
                 purchase.get("name", ""),
                 purchase.get("email", ""),
                 purchase.get("whatsapp", "N/A"),
-                purchase.get("transactionId", "N/A"),
-                purchase.get("timestamp", "N/A"),
-                "$15.00",
-                "USD",
-                quiz_answers.get("business_type", "N/A"),
-                quiz_answers.get("main_cost", "N/A"),
-                quiz_answers.get("objective", "N/A"),
-                quiz_answers.get("ai_usage", "N/A"),
-                purchase.get("clientIP", "N/A"),
-                purchase.get("userAgent", "N/A"),
-                purchase.get("id", "N/A"),  # Using document id as session ID
-                purchase.get("utmSource", "N/A"),
-                purchase.get("utmMedium", "N/A"),
-                purchase.get("utmCampaign", "N/A"),
-                purchase.get("utmContent", "N/A"),
-                purchase.get("utmTerm", "N/A"),
+                purchase.get("transaction_id", "N/A"),
+                purchase.get("created_at", "N/A"),
+                f"${purchase.get('value', 15.0)}",
+                purchase.get("currency", "USD"),
+                quiz_answers.get("1", "N/A") if isinstance(quiz_answers, dict) else "N/A",
+                quiz_answers.get("3", "N/A") if isinstance(quiz_answers, dict) else "N/A",
+                quiz_answers.get("4", "N/A") if isinstance(quiz_answers, dict) else "N/A",
+                quiz_answers.get("5", "N/A") if isinstance(quiz_answers, dict) else "N/A",
+                purchase.get("client_ip", "N/A"),
+                purchase.get("user_agent", "N/A"),
+                purchase.get("session_id", "N/A"),
+                purchase.get("utm_source", "N/A"),
+                purchase.get("utm_medium", "N/A"),
+                purchase.get("utm_campaign", "N/A"),
+                purchase.get("utm_content", "N/A"),
+                purchase.get("utm_term", "N/A"),
                 purchase.get("fbclid", "N/A"),
                 purchase.get("_fbc", "N/A"),
                 purchase.get("_fbp", "N/A"),
@@ -406,13 +436,13 @@ async def export_purchases_csv():
         print(f"Error exporting purchases CSV: {e}")
         return {"error": str(e)}
 
-# Endpoint para obtener IP del cliente
+# Endpoint to get client IP
 @api_router.get("/get-client-ip")
 async def get_client_ip(request: Request):
-    # Obtener IP real del cliente considerando proxies
+    # Get real client IP considering proxies
     client_ip = request.client.host
     
-    # Verificar headers de proxy
+    # Check proxy headers
     forwarded_for = request.headers.get("X-Forwarded-For")
     if forwarded_for:
         client_ip = forwarded_for.split(",")[0].strip()
@@ -423,27 +453,46 @@ async def get_client_ip(request: Request):
     
     return {"ip": client_ip}
 
-# Webhook para Lead Capture (InitiateCheckout)
+# Webhook for Lead Capture (InitiateCheckout)
 @api_router.post("/webhooks/lead-capture")
 async def lead_capture_webhook(webhook_data: LeadCaptureWebhook, request: Request):
     try:
-        # Obtener IP del cliente
+        # Get client IP
         client_ip = request.client.host
         forwarded_for = request.headers.get("X-Forwarded-For")
         if forwarded_for:
             client_ip = forwarded_for.split(",")[0].strip()
         
-        # Agregar IP a los datos
-        webhook_dict = webhook_data.dict()
-        webhook_dict["clientIP"] = client_ip
-        webhook_dict["timestamp"] = datetime.utcnow()
-        webhook_dict["id"] = str(uuid.uuid4())
+        # Prepare data for Supabase
+        webhook_dict = {
+            "session_id": str(uuid.uuid4()),
+            "name": webhook_data.name,
+            "email": webhook_data.email,
+            "whatsapp": webhook_data.whatsapp,
+            "user_agent": webhook_data.userAgent,
+            "fbclid": webhook_data.fbclid,
+            "_fbc": webhook_data._fbc,
+            "_fbp": webhook_data._fbp,
+            "utm_source": webhook_data.utmSource,
+            "utm_medium": webhook_data.utmMedium,
+            "utm_campaign": webhook_data.utmCampaign,
+            "utm_content": webhook_data.utmContent,
+            "utm_term": webhook_data.utmTerm,
+            "referrer": webhook_data.referrer,
+            "quiz_answers": webhook_data.quizAnswers or {},
+            "bucket_id": webhook_data.bucketId,
+            "event_type": webhook_data.eventType,
+            "value": webhook_data.value,
+            "currency": webhook_data.currency,
+            "client_ip": client_ip,
+            "timestamp": datetime.utcnow().isoformat(),
+        }
         
-        # Guardar en base de datos
-        await db.lead_webhooks.insert_one(webhook_dict)
+        # Save to Supabase
+        result = supabase.table('lead_webhooks').insert(webhook_dict).execute()
         
-        # Aquí puedes agregar lógica para enviar a servicios externos
-        # Por ejemplo, Facebook Conversions API, Make.com, Zapier, etc.
+        if not result.data:
+            raise Exception("Failed to insert lead webhook data")
         
         logger.info(f"Lead capture webhook received: {webhook_data.email}")
         
@@ -461,27 +510,47 @@ async def lead_capture_webhook(webhook_data: LeadCaptureWebhook, request: Reques
         logger.error(f"Error processing lead capture webhook: {str(e)}")
         return {"success": False, "error": str(e)}
 
-# Webhook para Purchase
+# Webhook for Purchase
 @api_router.post("/webhooks/purchase") 
 async def purchase_webhook(webhook_data: PurchaseWebhook, request: Request):
     try:
-        # Obtener IP del cliente
+        # Get client IP
         client_ip = request.client.host
         forwarded_for = request.headers.get("X-Forwarded-For")
         if forwarded_for:
             client_ip = forwarded_for.split(",")[0].strip()
         
-        # Agregar IP a los datos
-        webhook_dict = webhook_data.dict()
-        webhook_dict["clientIP"] = client_ip
-        webhook_dict["timestamp"] = datetime.utcnow()
-        webhook_dict["id"] = str(uuid.uuid4())
+        # Prepare data for Supabase
+        webhook_dict = {
+            "session_id": str(uuid.uuid4()),
+            "name": webhook_data.name,
+            "email": webhook_data.email,
+            "whatsapp": webhook_data.whatsapp,
+            "transaction_id": webhook_data.transactionId,
+            "order_id": webhook_data.orderId,
+            "user_agent": webhook_data.userAgent,
+            "fbclid": webhook_data.fbclid,
+            "_fbc": webhook_data._fbc,
+            "_fbp": webhook_data._fbp,
+            "utm_source": webhook_data.utmSource,
+            "utm_medium": webhook_data.utmMedium,
+            "utm_campaign": webhook_data.utmCampaign,
+            "utm_content": webhook_data.utmContent,
+            "utm_term": webhook_data.utmTerm,
+            "referrer": webhook_data.referrer,
+            "event_type": webhook_data.eventType,
+            "value": webhook_data.value,
+            "currency": webhook_data.currency,
+            "payment_method": webhook_data.paymentMethod,
+            "client_ip": client_ip,
+            "timestamp": datetime.utcnow().isoformat(),
+        }
         
-        # Guardar en base de datos
-        await db.purchase_webhooks.insert_one(webhook_dict)
+        # Save to Supabase
+        result = supabase.table('purchase_webhooks').insert(webhook_dict).execute()
         
-        # Aquí puedes agregar lógica para enviar a servicios externos
-        # Facebook Conversions API, email automation, etc.
+        if not result.data:
+            raise Exception("Failed to insert purchase webhook data")
         
         logger.info(f"Purchase webhook received: {webhook_data.email} - Transaction: {webhook_data.transactionId}")
         
@@ -517,7 +586,3 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()
