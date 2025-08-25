@@ -1,0 +1,65 @@
+<analysis>
+The previous AI engineer successfully developed a full-stack interactive funnel quiz application in Spanish, named Aura Fashion AI, from scratch. The development followed a clear iterative process: initial frontend mock-up, then backend integration planning, followed by backend webhook implementation, and continuous refinement based on user feedback. Key features like a personalized sales page, Hotmart widget integration, and comprehensive tracking webhooks were implemented. The engineer meticulously addressed design feedback, ensuring adherence to modern UI/UX principles (e.g., fixed headers, elegant color palette, mobile responsiveness). The project currently faces a critical bug: the frontend is not loading, as reported in the final message, requiring immediate investigation and fix before any further feature development.
+</analysis>
+
+<product_requirements>
+The primary objective is to create an interactive funnel quiz for fashion businesses, diagnosing profitability leaks using AI, capturing lead data, and directing users to a 5 USD workshop checkout (Moda Rentable con IA). The application must be in Spanish with an elegant, modern, minimalist design (black, white, gold), aligned with luxury fashion. It requires Stripe integration for checkout (later updated to Hotmart widget), and Meta, TikTok, and Google Analytics 4 tracking for events like , , , , , and .
+
+The funnel structure includes:
+1.  **Landing Page**: Hero section with fashion+AI imagery/video, title Descubre cuánto podrías ahorrar y ganar con IA en tu marca de moda, subtitle, and a Comenzar diagnóstico CTA.
+2.  **Quiz (5 steps)**: Progress bar, questions (business type, sales channels, high costs, main objective, AI usage level) with image-clickable cards. Question 2 allows multi-select, others are single-select.
+3.  **Data Capture**: Fields for Name, Email, WhatsApp (optional), privacy policy checkbox. Data to be saved to DB and admin panel.
+4.  **Personalized Diagnosis**: Dynamic title based on main pain point (Q3), 2-3 practical insights, savings estimation, and a CTA Reserva tu plaza al Workshop por solo 15 USD.
+5.  **Sales Page (Customized Checkout)**: A highly personalized sales page based on quiz answers, detailing the Moda Rentable con IA workshop structure (Day 1: Dolor al Deseo, Day 2: El Plan de Viaje, Day 3: El Vehículo - Aura X-Tyle + Aura X-Chool). It must include conversion elements like testimonials (updated with Lebrel, Lalá, Baffi), urgency counter, clear value proposition, and Hotmart widget integration for payment.
+6.  **Thank You Page**: Onboarding, links to community, access info.
+7.  **Admin Panel**: List of leads (name, email, WhatsApp, answers, abandonment stage), tracking of stages, metrics (% progress, % abandonment, conversion to purchase), filters (business type, pain point, AI usage), and CSV export.
+
+Post-purchase, the system needs email automation triggers: quiz abandonment before Q3, diagnosis viewed but no purchase, and post-purchase onboarding. Webhooks for  (Lead Capture) and  events are required, sending lead info, IP, fbclid, _fbc, _fbp, user agent, UTM parameters, quiz answers, and transaction ID to specified endpoints.
+</product_requirements>
+
+<key_technical_concepts>
+-   **Full-stack Architecture**: React (Frontend), FastAPI (Backend), MongoDB (Database).
+-   **UI/UX**: Shadcn/UI components, Tailwind CSS for styling, Lucide React for icons, Responsive Design, Glassmorphism.
+-   **State Management**: React Context API.
+-   **API Integration**: Axios for frontend-backend communication,  for API definition.
+-   **Payment Integration**: Hotmart widget integration for checkout.
+-   **Tracking**: Custom webhooks for  and  events, capturing various client and UTM data.
+</key_technical_concepts>
+
+<code_architecture>
+The application follows a standard full-stack structure:
+
+
+
+-   ****: Main React application entry point. Configures React Router for navigation between different funnel stages. Initializes backend API calls.
+-   ****: Contains all mock data for quiz questions, diagnosis scenarios, testimonials, and admin panel leads. This file was crucial for developing the frontend independently before backend integration.
+-   ****: Implements the initial hero section with the main call to action and integrated brand logos.
+-   ****: Manages the interactive quiz flow, displays questions, options, progress bar, and handles user selections. It was modified several times to refine auto-advance logic and hide navigation buttons for single-select questions.
+-   ****: Handles the lead data collection form (name, email, WhatsApp) and now dispatches the  webhook.
+-   ****: Displays the personalized diagnosis based on quiz answers and directs to the sales page. Was updated to remove the free template button.
+-   ** (conceptually SalesPage)**: This file was initially a generic checkout component but was heavily refactored into a detailed, personalized sales page for the workshop. It now integrates the Hotmart payment widget and dispatches the  webhook upon successful payment. Significant modifications were made to include workshop structure, testimonials, urgency elements, and remove previous bonus/pricing sections.
+-   ****: The post-purchase page providing onboarding information and WhatsApp group link.
+-   ****: Displays the lead management dashboard with filters, metrics, and CSV export functionality, using mock data.
+-   ****: A newly created utility file to centralize webhook logic for  and  events.
+-   ****: FastAPI backend that defines API routes, handles MongoDB interactions for  and now includes webhook endpoints (, ) to store incoming lead and purchase data in MongoDB collections (, ). It was also updated to include a  endpoint for webhook data.
+-   ** and **: Global CSS files for styling, including custom colors, typography, and animations conforming to design guidelines.
+-   ****: Tailwind CSS configuration for custom theme variables, colors, and animations.
+-   ****: Documents the API contracts between frontend and backend, specifying data structures for mocked data, backend implementation requirements, and integration details. It was updated to reflect changes in the sales page and webhook integrations.
+</code_architecture>
+
+<pending_tasks>
+-   The frontend is currently not opening, requiring immediate debugging and a fix.
+-   Manual testing for the automatic quiz progression needs to be thoroughly performed.
+-   Integration of webhooks with specific services (e.g., Facebook Conversions API, Make.com/Zapier, Email marketing, CRM) as discussed.
+-   Consideration of MongoDB Atlas or other cloud solutions for production database setup.
+</pending_tasks>
+
+<current_work>
+Immediately before this summary request, the previous AI engineer had just completed the integration of Hotmart payment widget and implemented comprehensive webhooks for tracking  and  events. The webhooks collect detailed user information, IP, Facebook tracking IDs, UTM parameters, and quiz responses, storing them in dedicated  and  collections in MongoDB. The backend was updated with new API routes  and  to handle these events, and a  endpoint for IP detection.
+
+The engineer had successfully tested the functionality of these webhooks via  commands, confirming data capture. The last reported action by the user was no abre (it doesn't open), indicating a critical issue where the frontend application is failing to load, preventing any further interaction or verification of the implemented features. The immediate work is to diagnose and resolve this frontend loading issue.
+</current_work>
+
+<optional_next_step>
+My next step is to diagnose why the frontend is not opening and implement a fix.
+</optional_next_step>
