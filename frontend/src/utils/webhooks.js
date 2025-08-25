@@ -55,8 +55,15 @@ const generateSessionId = () => {
 // Webhook para Lead Capture (InitiateCheckout)
 export const sendLeadCaptureWebhook = async (leadData, quizAnswers) => {
   const clientInfo = getClientInfo();
+  // Obtener IP del cliente (backend)
+  let ip = null;
+  try {
+    ip = await getClientIP();
+  } catch (error) {
+    console.error('Error obteniendo IP desde backend:', error);
+  }
   const webhookUrls = getWebhookUrls();
-  
+
   const webhookData = {
     // Datos del lead
     name: leadData.name,
@@ -65,6 +72,7 @@ export const sendLeadCaptureWebhook = async (leadData, quizAnswers) => {
     
     // Datos de tracking
     ...clientInfo,
+    ip,
     
     // Datos del quiz
     quizAnswers,
