@@ -2,6 +2,7 @@ import React from "react";
 import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LandingPage from "./components/LandingPage";
+import { saveUTMParameters } from "./utils/webhooks";
 import Quiz from "./components/Quiz";
 import LeadCapture from "./components/LeadCapture";
 import Diagnosis from "./components/Diagnosis";
@@ -21,6 +22,8 @@ function App() {
   });
 
   React.useEffect(() => {
+    // Guardar parámetros UTM y fbclid al inicio de la app
+    saveUTMParameters();
     // Generar sessionId único
     const sessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
     setFunnelData(prev => ({ ...prev, sessionId }));
