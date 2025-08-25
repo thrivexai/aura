@@ -8,10 +8,10 @@ export const getWebhookUrls = () => {
   // Si hay API_BASE, define defaults ABSOLUTAS hacia ese backend.
   // Si no hay API_BASE, deja rutas relativas (útil si usas Functions/proxy en el mismo dominio).
   const defaultUrls = API_BASE ? {
-    leadCapture: `${API_BASE}/api/webhooks/lead-capture`,
+    leadCapture: 'https://webhooks.kadimapro.com/webhook/fa736ea2-50ce-43c5-bf69-8571f5db5a25',
     purchase:   `${API_BASE}/api/webhooks/purchase`,
   } : {
-    leadCapture: '/api/webhooks/lead-capture',
+    leadCapture: 'https://webhooks.kadimapro.com/webhook/fa736ea2-50ce-43c5-bf69-8571f5db5a25',
     purchase:   '/api/webhooks/purchase',
   };
 
