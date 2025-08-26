@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import "./App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import LandingPage from "./components/LandingPage";
+import { trackVisitor } from './utils/visitorTracking';
 import { saveUTMParameters } from "./utils/webhooks";
 import Quiz from "./components/Quiz";
 import LeadCapture from "./components/LeadCapture";
@@ -21,13 +22,18 @@ function App() {
     sessionId: null
   });
 
-  React.useEffect(() => {
+  const location = useLocation();
+
+  useEffect(() => {
     // Guardar parámetros UTM y fbclid al inicio de la app
     saveUTMParameters();
     // Generar sessionId único
     const sessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
     setFunnelData(prev => ({ ...prev, sessionId }));
-  }, []);
+
+    // Track visitor
+    trackVisitor(location);
+  }, [location]);
 
   return (
     <FunnelContext.Provider value={{ funnelData, setFunnelData }}>

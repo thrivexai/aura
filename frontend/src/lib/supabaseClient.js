@@ -151,13 +151,23 @@ export const getMetricsFromSupabase = async () => {
 
     const totalLeads = leadsResult.count || 0
     const totalPurchases = purchasesResult.count || 0
+
+    // Obtener el número total de visitantes desde la tabla 'visitors'
+    const { data: visitorsData, error: visitorsError } = await supabase
+      .from('visitors')
+      .select('id', { count: 'exact' });
+
+    if (visitorsError) {
+      console.error('Error obteniendo el número de visitantes:', visitorsError);
+    }
+
+    const totalVisitors = visitorsData ? visitorsData.length : 0;
     
     // Calcular métricas básicas
-    const estimatedVisitors = Math.max(totalLeads * 3, 100)
     const conversionRate = totalLeads > 0 ? (totalPurchases / totalLeads) * 100 : 0
 
     const metrics = {
-      totalVisitors: estimatedVisitors,
+      totalVisitors: totalVisitors,
       leadsGenerated: totalLeads,
       purchases: totalPurchases,
       conversionRate: Math.round(conversionRate * 10) / 10,
