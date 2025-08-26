@@ -17,7 +17,8 @@ import {
 } from 'lucide-react';
 import { FunnelContext } from '../App';
 import { trackEvent, diagnosisTemplates, workshopContent, testimonials } from '../mock';
-import { sendPurchaseWebhook } from '../utils/webhooks';
+import { sendPurchaseWebhook, getClientInfo } from '../utils/webhooks';
+import { savePurchase } from '../lib/supabaseClient';
 
 const SalesPage = () => {
   const navigate = useNavigate();
@@ -170,16 +171,38 @@ const SalesPage = () => {
             ...event.data
           };
 
-          // Enviar webhook de compra
+          // Enviar webhook externo (mantener funcionando como está)
           const webhookResult = await sendPurchaseWebhook(
             { name: leadName, email: leadEmail, whatsapp: funnelData?.leadData?.whatsapp },
             purchaseData
           );
 
           if (webhookResult.success) {
-            console.log('✅ Purchase webhook enviado exitosamente:', webhookResult.data);
+            console.log('✅ Purchase webhook externo enviado exitosamente:', webhookResult.data);
           } else {
-            console.error('⚠️ Error en purchase webhook:', webhookResult.error);
+            console.error('⚠️ Error en purchase webhook externo:', webhookResult.error);
+          }
+
+          // NUEVO: Guardar también en Supabase directamente
+          const clientInfo = getClientInfo();
+          const supabaseResult = await savePurchase(
+            { 
+              name: leadName, 
+              email: leadEmail, 
+              whatsapp: funnelData?.leadData?.whatsapp,
+              client_ip: funnelData?.leadData?.client_ip 
+            },
+            {
+              ...purchaseData,
+              quizAnswers: funnelData?.answers || {}
+            },
+            clientInfo
+          );
+
+          if (supabaseResult.success) {
+            console.log('✅ Compra guardada en Supabase exitosamente:', supabaseResult.data);
+          } else {
+            console.error('⚠️ Error guardando compra en Supabase:', supabaseResult.error);
           }
 
           trackEvent('purchase_success', {
@@ -204,6 +227,7 @@ const SalesPage = () => {
       if (customEvent.detail && customEvent.detail.purchase_success) {
         const purchaseData = customEvent.detail;
         
+        // Enviar webhook externo
         const webhookResult = await sendPurchaseWebhook(
           { name: leadName, email: leadEmail, whatsapp: funnelData?.leadData?.whatsapp },
           purchaseData
@@ -211,6 +235,26 @@ const SalesPage = () => {
 
         if (webhookResult.success) {
           console.log('✅ Purchase webhook enviado (callback):', webhookResult.data);
+        }
+
+        // Guardar en Supabase
+        const clientInfo = getClientInfo();
+        const supabaseResult = await savePurchase(
+          { 
+            name: leadName, 
+            email: leadEmail, 
+            whatsapp: funnelData?.leadData?.whatsapp,
+            client_ip: funnelData?.leadData?.client_ip 
+          },
+          {
+            ...purchaseData,
+            quizAnswers: funnelData?.answers || {}
+          },
+          clientInfo
+        );
+
+        if (supabaseResult.success) {
+          console.log('✅ Compra guardada en Supabase (callback):', supabaseResult.data);
         }
 
         navigate('/thank-you');

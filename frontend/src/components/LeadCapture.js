@@ -7,7 +7,8 @@ import { Checkbox } from './ui/checkbox';
 import { Gift, Shield, ArrowRight } from 'lucide-react';
 import { FunnelContext } from '../App';
 import { trackEvent } from '../mock';
-import { sendLeadCaptureWebhook, saveUTMParameters } from '../utils/webhooks';
+import { sendLeadCaptureWebhook, saveUTMParameters, getClientInfo } from '../utils/webhooks';
+import { saveLeadCapture } from '../lib/supabaseClient';
 
 // Teléfono con buscador de países
 import PhoneInput from 'react-phone-input-2';
@@ -105,6 +106,7 @@ const LeadCapture = () => {
   };
 
   const handleSubmit = async (e) => {
+    console.log('handleSubmit called');
     e.preventDefault();
 
     const { valid, newErrors } = validateForm();
@@ -132,16 +134,31 @@ const LeadCapture = () => {
         currentStep: 2
       }));
 
-      // Enviar webhook con todos los datos (incluye IP y metadatos de país)
+
+      // Enviar webhook externo (mantener funcionando como está)
+      console.log('Calling sendLeadCaptureWebhook', normalizedFormData, funnelData.answers);
       const webhookResult = await sendLeadCaptureWebhook(
         normalizedFormData,
         funnelData.answers
       );
-
       if (webhookResult.success) {
-        console.log('✅ Webhook enviado exitosamente:', webhookResult.data);
+        console.log('✅ Webhook externo enviado exitosamente:', webhookResult.data);
       } else {
-        console.error('⚠️ Error en webhook:', webhookResult.error);
+        console.error('⚠️ Error en webhook externo:', webhookResult.error);
+      }
+
+      // NUEVO: Guardar también en Supabase directamente
+      const clientInfo = getClientInfo();
+      const supabaseResult = await saveLeadCapture(
+        normalizedFormData,
+        funnelData.answers,
+        clientInfo
+      );
+
+      if (supabaseResult.success) {
+        console.log('✅ Datos guardados en Supabase exitosamente:', supabaseResult.data);
+      } else {
+        console.error('⚠️ Error guardando en Supabase:', supabaseResult.error);
       }
 
       trackEvent('lead_submitted', {

@@ -24,6 +24,7 @@ import {
   X
 } from 'lucide-react';
 import { quizQuestions, trackEvent } from '../mock';
+import { getLeadsFromSupabase, getPurchasesFromSupabase, getMetricsFromSupabase } from '../lib/supabaseClient';
 
 const AdminPanel = () => {
   const [leads, setLeads] = useState([]);
@@ -110,34 +111,88 @@ const AdminPanel = () => {
     setLoading(true);
     setError(null);
     try {
-      // Fetch leads
-      const leadsResponse = await fetch(`${backendUrl}/api/leads`);
-      const leadsData = await leadsResponse.json();
-      
-      // Fetch purchases  
-      const purchasesResponse = await fetch(`${backendUrl}/api/purchases`);
-      const purchasesData = await purchasesResponse.json();
-      
-      // Fetch metrics
-      const metricsResponse = await fetch(`${backendUrl}/api/metrics`);
-      const metricsData = await metricsResponse.json();
+      // Obtener datos directamente de Supabase
+      const [leadsResult, purchasesResult, metricsResult] = await Promise.all([
+        getLeadsFromSupabase(),
+        getPurchasesFromSupabase(),
+        getMetricsFromSupabase()
+      ]);
 
-      if (leadsData.error || purchasesData.error || metricsData.error) {
-        throw new Error(leadsData.error || purchasesData.error || metricsData.error);
+      if (!leadsResult.success) {
+        throw new Error(`Error obteniendo leads: ${leadsResult.error}`);
+      }
+      if (!purchasesResult.success) {
+        throw new Error(`Error obteniendo purchases: ${purchasesResult.error}`);
+      }
+      if (!metricsResult.success) {
+        throw new Error(`Error obteniendo métricas: ${metricsResult.error}`);
       }
 
-      setLeads(leadsData.leads || []);
-      setPurchases(purchasesData.purchases || []);
-      setMetrics(metricsData);
+      // Formatear datos para el frontend
+      const formattedLeads = leadsResult.leads.map(lead => ({
+        id: lead.session_id || lead.id,
+        name: lead.name || 'Sin nombre',
+        email: lead.email || 'sin-email@ejemplo.com',
+        whatsapp: lead.whatsapp,
+        businessType: (lead.quiz_answers && lead.quiz_answers['1']) || 'sin-especificar',
+        mainCost: (lead.quiz_answers && lead.quiz_answers['3']) || 'sin-especificar',
+        objective: (lead.quiz_answers && lead.quiz_answers['4']) || 'sin-especificar',
+        aiUsage: (lead.quiz_answers && lead.quiz_answers['5']) || 'sin-especificar',
+        stage: 'lead_capture',
+        createdAt: lead.created_at,
+        ip: lead.client_ip,
+        userAgent: lead.user_agent,
+        utmSource: lead.utm_source,
+        utmMedium: lead.utm_medium,
+        utmCampaign: lead.utm_campaign,
+        utmContent: lead.utm_content,
+        utmTerm: lead.utm_term,
+        fbclid: lead.fbclid,
+        _fbc: lead._fbc,
+        _fbp: lead._fbp,
+        referrer: lead.referrer,
+        sessionId: lead.session_id
+      }));
+
+      const formattedPurchases = purchasesResult.purchases.map(purchase => ({
+        id: purchase.session_id || purchase.id,
+        name: purchase.name || 'Sin nombre',
+        email: purchase.email || 'sin-email@ejemplo.com',
+        whatsapp: purchase.whatsapp,
+        businessType: (purchase.quiz_answers && purchase.quiz_answers['1']) || 'sin-especificar',
+        mainCost: (purchase.quiz_answers && purchase.quiz_answers['3']) || 'sin-especificar',
+        objective: (purchase.quiz_answers && purchase.quiz_answers['4']) || 'sin-especificar',
+        aiUsage: (purchase.quiz_answers && purchase.quiz_answers['5']) || 'sin-especificar',
+        stage: 'purchased',
+        createdAt: purchase.created_at,
+        transactionId: purchase.transaction_id,
+        amount: purchase.value || 15.0,
+        ip: purchase.client_ip,
+        userAgent: purchase.user_agent,
+        utmSource: purchase.utm_source,
+        utmMedium: purchase.utm_medium,
+        utmCampaign: purchase.utm_campaign,
+        utmContent: purchase.utm_content,
+        utmTerm: purchase.utm_term,
+        fbclid: purchase.fbclid,
+        _fbc: purchase._fbc,
+        _fbp: purchase._fbp,
+        referrer: purchase.referrer,
+        sessionId: purchase.session_id
+      }));
+
+      setLeads(formattedLeads);
+      setPurchases(formattedPurchases);
+      setMetrics(metricsResult.metrics);
       
-      console.log('Data loaded successfully:', {
-        leads: leadsData.leads?.length || 0,
-        purchases: purchasesData.purchases?.length || 0,
-        metrics: metricsData
+      console.log('✅ Datos cargados desde Supabase:', {
+        leads: formattedLeads.length,
+        purchases: formattedPurchases.length,
+        metrics: metricsResult.metrics
       });
       
     } catch (err) {
-      console.error('Error fetching data:', err);
+      console.error('❌ Error obteniendo datos de Supabase:', err);
       setError(err.message);
     } finally {
       setLoading(false);

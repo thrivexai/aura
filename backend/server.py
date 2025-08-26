@@ -58,6 +58,7 @@ class LeadCaptureWebhook(BaseModel):
     eventType: str = "InitiateCheckout"
     value: float = 15.0
     currency: str = "USD"
+    client_ip: Optional[str] = None
 
 class PurchaseWebhook(BaseModel):
     name: str
@@ -76,6 +77,7 @@ class PurchaseWebhook(BaseModel):
     value: float = 15.0
     currency: str = "USD"
     paymentMethod: str = "hotmart"
+    client_ip: Optional[str] = None
 
 # Helper function to get database connection
 async def get_db_connection():
@@ -402,10 +404,10 @@ async def export_purchases_csv():
                 purchase.get("created_at", "N/A"),
                 f"${purchase.get('value', 15.0)}",
                 purchase.get("currency", "USD"),
-                quiz_answers.get("1", "N/A") if isinstance(quiz_answers, dict) else "N/A",
-                quiz_answers.get("3", "N/A") if isinstance(quiz_answers, dict) else "N/A",
-                quiz_answers.get("4", "N/A") if isinstance(quiz_answers, dict) else "N/A",
-                quiz_answers.get("5", "N/A") if isinstance(quiz_answers, dict) else "N/A",
+                quiz_answers.get("1", "N/A") if isinstance_answers, dict) else "N/A",
+                quiz_answers.get("3", "N/A") if isinstance_answers, dict) else "N/A",
+                quiz_answers.get("4", "N/A") if isinstance_answers, dict) else "N/A",
+                quiz_answers.get("5", "N/A") if isinstance_answers, dict) else "N/A",
                 purchase.get("client_ip", "N/A"),
                 purchase.get("user_agent", "N/A"),
                 purchase.get("session_id", "N/A"),
@@ -436,33 +438,12 @@ async def export_purchases_csv():
         print(f"Error exporting purchases CSV: {e}")
         return {"error": str(e)}
 
-# Endpoint to get client IP
-@api_router.get("/get-client-ip")
-async def get_client_ip(request: Request):
-    # Get real client IP considering proxies
-    client_ip = request.client.host
-    
-    # Check proxy headers
-    forwarded_for = request.headers.get("X-Forwarded-For")
-    if forwarded_for:
-        client_ip = forwarded_for.split(",")[0].strip()
-    
-    real_ip = request.headers.get("X-Real-IP")
-    if real_ip:
-        client_ip = real_ip
-    
-    return {"ip": client_ip}
-
 # Webhook for Lead Capture (InitiateCheckout)
-@api_router.post("/webhooks/lead-capture")
 async def lead_capture_webhook(webhook_data: LeadCaptureWebhook, request: Request):
     try:
-        # Get client IP
-        client_ip = request.client.host
-        forwarded_for = request.headers.get("X-Forwarded-For")
-        if forwarded_for:
-            client_ip = forwarded_for.split(",")[0].strip()
-        
+        # Prioritize client_ip from webhook data
+        client_ip = webhook_data.client_ip
+
         # Prepare data for Supabase
         webhook_dict = {
             "session_id": str(uuid.uuid4()),
@@ -476,8 +457,8 @@ async def lead_capture_webhook(webhook_data: LeadCaptureWebhook, request: Reques
             "utm_source": webhook_data.utmSource,
             "utm_medium": webhook_data.utmMedium,
             "utm_campaign": webhook_data.utmCampaign,
-            "utm_content": webhook_data.utmContent,
-            "utm_term": webhook_data.utmTerm,
+            "utmContent": webhook_data.utmContent,
+            "utmTerm": webhook_data.utmTerm,
             "referrer": webhook_data.referrer,
             "quiz_answers": webhook_data.quizAnswers or {},
             "bucket_id": webhook_data.bucketId,
@@ -487,15 +468,16 @@ async def lead_capture_webhook(webhook_data: LeadCaptureWebhook, request: Reques
             "client_ip": client_ip,
             "timestamp": datetime.utcnow().isoformat(),
         }
-        
+
         # Save to Supabase
         result = supabase.table('lead_webhooks').insert(webhook_dict).execute()
-        
+
         if not result.data:
             raise Exception("Failed to insert lead webhook data")
-        
+
         logger.info(f"Lead capture webhook received: {webhook_data.email}")
-        
+        logger.info(f"Lead capture webhook data: {webhook_data}")
+
         return {
             "success": True,
             "message": "Lead capture webhook processed successfully",
@@ -505,21 +487,17 @@ async def lead_capture_webhook(webhook_data: LeadCaptureWebhook, request: Reques
                 "clientIP": client_ip
             }
         }
-        
+
     except Exception as e:
         logger.error(f"Error processing lead capture webhook: {str(e)}")
         return {"success": False, "error": str(e)}
 
 # Webhook for Purchase
-@api_router.post("/webhooks/purchase") 
 async def purchase_webhook(webhook_data: PurchaseWebhook, request: Request):
     try:
-        # Get client IP
-        client_ip = request.client.host
-        forwarded_for = request.headers.get("X-Forwarded-For")
-        if forwarded_for:
-            client_ip = forwarded_for.split(",")[0].strip()
-        
+        # Prioritize client_ip from webhook data
+        client_ip = webhook_data.client_ip
+
         # Prepare data for Supabase
         webhook_dict = {
             "session_id": str(uuid.uuid4()),
@@ -535,8 +513,8 @@ async def purchase_webhook(webhook_data: PurchaseWebhook, request: Request):
             "utm_source": webhook_data.utmSource,
             "utm_medium": webhook_data.utmMedium,
             "utm_campaign": webhook_data.utmCampaign,
-            "utm_content": webhook_data.utmContent,
-            "utm_term": webhook_data.utmTerm,
+            "utmContent": webhook_data.utmContent,
+            "utmTerm": webhook_data.utmTerm,
             "referrer": webhook_data.referrer,
             "event_type": webhook_data.eventType,
             "value": webhook_data.value,
@@ -545,18 +523,19 @@ async def purchase_webhook(webhook_data: PurchaseWebhook, request: Request):
             "client_ip": client_ip,
             "timestamp": datetime.utcnow().isoformat(),
         }
-        
+
         # Save to Supabase
         result = supabase.table('purchase_webhooks').insert(webhook_dict).execute()
-        
+
         if not result.data:
             raise Exception("Failed to insert purchase webhook data")
-        
+
         logger.info(f"Purchase webhook received: {webhook_data.email} - Transaction: {webhook_data.transactionId}")
-        
+        logger.info(f"Purchase webhook data: {webhook_data}")
+
         return {
             "success": True,
-            "message": "Purchase webhook processed successfully", 
+            "message": "Purchase webhook processed successfully",
             "data": {
                 "email": webhook_data.email,
                 "transactionId": webhook_data.transactionId,
@@ -564,10 +543,19 @@ async def purchase_webhook(webhook_data: PurchaseWebhook, request: Request):
                 "clientIP": client_ip
             }
         }
-        
+
     except Exception as e:
         logger.error(f"Error processing purchase webhook: {str(e)}")
         return {"success": False, "error": str(e)}
+
+# Webhook endpoints
+@api_router.post("/webhooks/lead-capture")
+async def webhook_lead_capture(webhook_data: LeadCaptureWebhook, request: Request):
+    return await lead_capture_webhook(webhook_data, request)
+
+@api_router.post("/webhooks/purchase")
+async def webhook_purchase(webhook_data: PurchaseWebhook, request: Request):
+    return await purchase_webhook(webhook_data, request)
 
 # Include the router in the main app
 app.include_router(api_router)

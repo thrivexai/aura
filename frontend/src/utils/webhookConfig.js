@@ -53,14 +53,7 @@ export const buildWebhookUrl = (url) => {
 
 // Función para determinar si usar proxy o envío directo
 export const shouldUseProxy = (url) => {
-  // Usar proxy para URLs EXTERNAS (distinto origin)
-  try {
-    const target = new URL(url);
-    return target.origin !== window.location.origin;
-  } catch {
-    // Si no es URL absoluta (relativa), no usar proxy
-    return false;
-  }
+  return false;
 };
 
 // Función para enviar webhook usando proxy si es necesario
@@ -80,13 +73,19 @@ export const sendWebhookWithProxy = async (url, data) => {
     });
   } else {
     // Envío directo para URLs internas o si no hay API_BASE
-    console.log('📡 Envío directo a webhook interno:', url);
-    return fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data)
-    });
+    console.log('📡 Envío directo a webhook interno:', url, data);
+    console.log('No proxy used');
+    try {
+      return fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+      });
+    } catch (error) {
+      console.error('Error en fetch:', error);
+      throw error;
+    }
   }
 };
