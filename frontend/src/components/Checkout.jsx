@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -20,22 +20,90 @@ import { trackEvent, diagnosisTemplates, workshopContent, testimonials } from '.
 import { sendPurchaseWebhook, getClientInfo } from '../utils/webhooks';
 import { savePurchase } from '../lib/supabaseClient';
 
+/* ================================
+   HELPERS: Pre-popular Hotmart
+   ================================ */
+const stripNonDigitsPlus = (s='') => (s || '').replace(/[^\d+]/g, '');
+const stripNonDigits = (s='') => (s || '').replace(/\D/g, '');
+
+/** Devuelve solo el número local (sin código país) para usar en ?phonenumber= */
+const getLocalPhone = (lead) => {
+  const e164Raw = stripNonDigitsPlus(lead?.whatsapp);           // ej. +51984045554
+  const dial = stripNonDigits(lead?.whatsapp_dial_code);        // ej. "51" (de react-phone-input-2)
+
+  if (!e164Raw) return '';
+  let digits = e164Raw.startsWith('+') ? e164Raw.slice(1) : e164Raw; // 51984045554
+
+  // Normalizar prefijos tipo "00"
+  if (digits.startsWith('00')) digits = digits.replace(/^00+/, '');
+
+  // Si tenemos dial, lo removemos (todas las repeticiones iniciales por seguridad)
+  if (dial) {
+    while (digits.startsWith(dial)) digits = digits.slice(dial.length);
+  }
+
+  // Limpieza final
+  const local = stripNonDigits(digits);
+  return local;
+};
+
+const buildHotmartUrl = (baseUrl, lead = {}, funnelData = {}) => {
+  const url = new URL(baseUrl);
+
+  // Solo estos tres campos:
+  if (lead.name) url.searchParams.set('name', lead.name);
+  if (lead.email) url.searchParams.set('email', lead.email);
+
+  const localPhone = getLocalPhone(lead);
+  if (localPhone) url.searchParams.set('phonenumber', localPhone);
+
+  // (Opcional) UTM / fbclid / Meta cookies si las guardas
+  const utmKeys = ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','fbclid','_fbc','_fbp'];
+  utmKeys.forEach((k) => {
+    const v = funnelData?.[k] ?? funnelData?.leadData?.[k];
+    if (v) url.searchParams.set(k, v);
+  });
+
+  return url.toString();
+};
+
+const isMobileUA = () =>
+  typeof navigator !== 'undefined' &&
+  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+/* ============ FIN HELPERS ============ */
+
 const SalesPage = () => {
   const navigate = useNavigate();
   const { funnelData } = useContext(FunnelContext);
   const [timeLeft, setTimeLeft] = useState(48 * 60 * 60); // 48 horas en segundos
   const [hotmartLoaded, setHotmartLoaded] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
 
   // Obtener datos personalizados basados en las respuestas o usar defaults
   const bucketId = funnelData?.answers?.[3] || 'fotografia';
   const diagnosis = diagnosisTemplates[bucketId] || diagnosisTemplates.fotografia;
   const businessType = funnelData?.answers?.[1] || 'marca-emergente';
-  const objective = funnelData?.answers?.[4] || 'reducir-costos';
-  
+
   // Datos del lead o datos mock para desarrollo
-  const leadName = funnelData?.leadData?.name || 'María García';
-  const leadEmail = funnelData?.leadData?.email || 'maria@test.com';
+  const lead = funnelData?.leadData || {};
+  const leadName = lead?.name || 'María García';
+  const leadEmail = lead?.email || 'maria@test.com';
+
+  // Construir HotLink con pre-llenado (memo)
+  const HOTMART_BASE = 'https://pay.hotmart.com/B101346536X?checkoutMode=2';
+  const checkoutUrl = useMemo(() => buildHotmartUrl(HOTMART_BASE, lead, {
+    utm_source: funnelData?.utm_source,
+    utm_medium: funnelData?.utm_medium,
+    utm_campaign: funnelData?.utm_campaign,
+    utm_content: funnelData?.utm_content,
+    utm_term: funnelData?.utm_term,
+    fbclid: funnelData?.fbclid || funnelData?.leadData?.fbclid,
+    _fbc: funnelData?.leadData?._fbc,
+    _fbp: funnelData?.leadData?._fbp,
+  }), [HOTMART_BASE, lead, funnelData]);
+
+  // Detectar móvil una sola vez
+  const mobile = useMemo(() => isMobileUA(), []);
 
   useEffect(() => {
     trackEvent('checkout_start', {
@@ -44,10 +112,9 @@ const SalesPage = () => {
       bucket_id: bucketId
     });
 
-    // Cargar el widget de Hotmart con manejo de errores
+    // Cargar el widget de Hotmart (solo útil en desktop)
     const loadHotmart = () => {
       try {
-        // Script de Hotmart
         const script = document.createElement('script');
         script.src = 'https://static.hotmart.com/checkout/widget.min.js';
         script.onload = () => {
@@ -60,7 +127,6 @@ const SalesPage = () => {
         };
         document.head.appendChild(script);
 
-        // CSS de Hotmart
         const link = document.createElement('link');
         link.rel = 'stylesheet';
         link.type = 'text/css';
@@ -76,7 +142,7 @@ const SalesPage = () => {
     };
 
     loadHotmart();
-  }, [funnelData, bucketId, leadEmail]);
+  }, [bucketId, leadEmail]);
 
   // Contador regresivo
   useEffect(() => {
@@ -89,7 +155,6 @@ const SalesPage = () => {
         return prev - 1;
       });
     }, 1000);
-
     return () => clearInterval(timer);
   }, []);
 
@@ -100,7 +165,7 @@ const SalesPage = () => {
     return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleHotmartClick = () => {
+  const handleDesktopWidgetClick = () => {
     trackEvent('purchase_attempt', {
       order_id: `ORDER_${Date.now()}`,
       value: 15,
@@ -110,53 +175,21 @@ const SalesPage = () => {
     });
   };
 
-  // Personalización según el tipo de negocio y dolor
-  const getPersonalizedContent = () => {
-    const personalizations = {
-      'produccion': {
-        pain: 'los altos costos de producción están matando tu margen',
-        solution: 'optimizar tu cadena de producción con IA',
-        savings: 'hasta 40% en costos de producción',
-        timeframe: '30 días'
-      },
-      'fotografia': {
-        pain: 'el contenido visual te está costando una fortuna',
-        solution: 'generar contenido profesional con IA',
-        savings: 'hasta 85% en costos de contenido',
-        timeframe: '15 días'
-      },
-      'marketing': {
-        pain: 'tu marketing no convierte como debería',
-        solution: 'automatizar y optimizar tus campañas',
-        savings: 'hasta 75% mejor ROAS',
-        timeframe: '21 días'
-      },
-      'personal': {
-        pain: 'el trabajo manual te consume todo el tiempo',
-        solution: 'automatizar procesos repetitivos',
-        savings: 'hasta 50% menos horas-persona',
-        timeframe: '45 días'
-      },
-      'inventario': {
-        pain: 'el stock inmóvil está matando tu cash flow',
-        solution: 'predecir demanda con inteligencia artificial',
-        savings: 'hasta 55% menos stock inmóvil',
-        timeframe: '60 días'
-      }
-    };
-
-    return personalizations[bucketId] || personalizations.produccion;
+  const handleMobileRedirect = (e) => {
+    e?.preventDefault?.();
+    trackEvent('purchase_attempt', {
+      order_id: `ORDER_${Date.now()}`,
+      value: 15,
+      currency: 'USD',
+      lead_email: leadEmail,
+      payment_method: 'hotmart_mobile'
+    });
+    window.location.assign(checkoutUrl);
   };
 
-  const personalizedContent = getPersonalizedContent();
-
-  // Para desarrollo, siempre mostrar la página con datos mock si no hay datos del funnel
-  console.log("🔧 Datos del funnel:", funnelData);
-
-  // Listener para detectar cuando se completa el pago en Hotmart
+  // Listener para detectar compra completada
   useEffect(() => {
     const handleMessage = async (event) => {
-      // Hotmart envía mensajes cuando se completa el pago
       if (event.origin === 'https://pay.hotmart.com' || event.origin === 'https://static.hotmart.com') {
         if (event.data && (
           event.data.type === 'HOTMART_PURCHASE_SUCCESS' || 
@@ -171,26 +204,18 @@ const SalesPage = () => {
             ...event.data
           };
 
-          // Enviar webhook externo (mantener funcionando como está)
           const webhookResult = await sendPurchaseWebhook(
-            { name: leadName, email: leadEmail, whatsapp: funnelData?.leadData?.whatsapp },
+            { name: leadName, email: leadEmail, whatsapp: lead?.whatsapp },
             purchaseData
           );
 
-          if (webhookResult.success) {
-            console.log('✅ Purchase webhook externo enviado exitosamente:', webhookResult.data);
-          } else {
-            console.error('⚠️ Error en purchase webhook externo:', webhookResult.error);
-          }
-
-          // NUEVO: Guardar también en Supabase directamente
           const clientInfo = getClientInfo();
           const supabaseResult = await savePurchase(
             { 
               name: leadName, 
               email: leadEmail, 
-              whatsapp: funnelData?.leadData?.whatsapp,
-              client_ip: funnelData?.leadData?.client_ip 
+              whatsapp: lead?.whatsapp,
+              client_ip: lead?.client_ip 
             },
             {
               ...purchaseData,
@@ -199,52 +224,38 @@ const SalesPage = () => {
             clientInfo
           );
 
-          if (supabaseResult.success) {
-            console.log('✅ Compra guardada en Supabase exitosamente:', supabaseResult.data);
-          } else {
-            console.error('⚠️ Error guardando compra en Supabase:', supabaseResult.error);
-          }
-
           trackEvent('purchase_success', {
             order_id: purchaseData.transactionId,
             value: 15,
             currency: 'USD',
             lead_email: leadEmail,
             payment_method: 'hotmart',
-            webhook_sent: webhookResult.success
+            webhook_sent: Boolean(webhookResult?.success)
           });
-          
-          // Redirigir a página de gracias
+
           setTimeout(() => {
             navigate('/thank-you');
-          }, 1000); // Pequeño delay para asegurar que el webhook se envíe
+          }, 1000);
         }
       }
     };
 
-    // También escuchar eventos de la página para casos especiales
     const handleHotmartCallback = async (customEvent) => {
       if (customEvent.detail && customEvent.detail.purchase_success) {
         const purchaseData = customEvent.detail;
         
-        // Enviar webhook externo
         const webhookResult = await sendPurchaseWebhook(
-          { name: leadName, email: leadEmail, whatsapp: funnelData?.leadData?.whatsapp },
+          { name: leadName, email: leadEmail, whatsapp: lead?.whatsapp },
           purchaseData
         );
 
-        if (webhookResult.success) {
-          console.log('✅ Purchase webhook enviado (callback):', webhookResult.data);
-        }
-
-        // Guardar en Supabase
         const clientInfo = getClientInfo();
         const supabaseResult = await savePurchase(
           { 
             name: leadName, 
             email: leadEmail, 
-            whatsapp: funnelData?.leadData?.whatsapp,
-            client_ip: funnelData?.leadData?.client_ip 
+            whatsapp: lead?.whatsapp,
+            client_ip: lead?.client_ip 
           },
           {
             ...purchaseData,
@@ -253,9 +264,14 @@ const SalesPage = () => {
           clientInfo
         );
 
-        if (supabaseResult.success) {
-          console.log('✅ Compra guardada en Supabase (callback):', supabaseResult.data);
-        }
+        trackEvent('purchase_success', {
+          order_id: purchaseData?.transactionId || `ORDER_${Date.now()}`,
+          value: 15,
+          currency: 'USD',
+          lead_email: leadEmail,
+          payment_method: 'hotmart_callback',
+          webhook_sent: Boolean(webhookResult?.success)
+        });
 
         navigate('/thank-you');
       }
@@ -268,7 +284,7 @@ const SalesPage = () => {
       window.removeEventListener('message', handleMessage);
       window.removeEventListener('hotmart_purchase_success', handleHotmartCallback);
     };
-  }, [navigate, leadEmail, leadName, funnelData]);
+  }, [navigate, leadEmail, leadName, lead, funnelData]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-stone-100">
@@ -293,7 +309,7 @@ const SalesPage = () => {
         </div>
       </header>
 
-      <main className="px-6 py-12 pt-24">{/* pt-24 para compensar header fijo */}
+      <main className="px-6 py-12 pt-24">
         <div className="max-w-5xl mx-auto">
           {/* Hero personalizado */}
           <section className="text-center mb-16">
@@ -304,7 +320,7 @@ const SalesPage = () => {
             <h1 className="text-4xl lg:text-5xl font-bold text-stone-900 mb-6 leading-tight">
               {leadName}, descubriste que{' '}
               <span className="bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent">
-                {personalizedContent.pain}
+                {diagnosis.pain}
               </span>
             </h1>
             
@@ -321,6 +337,7 @@ const SalesPage = () => {
           </section>
 
           {/* Video/Imagen hero */}
+          {false && (
           <section className="mb-16">
             <div className="bg-gradient-to-r from-stone-900 to-stone-800 rounded-2xl p-8 text-white text-center">
               <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -340,6 +357,7 @@ const SalesPage = () => {
               </Button>
             </div>
           </section>
+          )}
 
           {/* Contenido del workshop */}
           <section className="mb-16">
@@ -451,11 +469,14 @@ const SalesPage = () => {
               </div>
 
               <div className="mb-6">
-                {hotmartLoaded ? (
-                  <a 
-                    href="https://pay.hotmart.com/B101346536X?checkoutMode=2" 
+                {/* Desktop: widget Hotmart. Móvil: redirección directa con URL completa */}
+                {!mobile && hotmartLoaded ? (
+                  <a
+                    href={checkoutUrl}
                     className="hotmart-fb hotmart__button-checkout block w-full"
-                    onClick={handleHotmartClick}
+                    onClick={handleDesktopWidgetClick}
+                    target="_self"
+                    rel="noopener"
                     style={{ textDecoration: 'none' }}
                   >
                     <div className="bg-amber-600 hover:bg-amber-700 text-white px-12 py-4 text-xl rounded-xl transition-all duration-200 hover:transform hover:scale-105 shadow-2xl text-center font-semibold cursor-pointer">
@@ -466,12 +487,14 @@ const SalesPage = () => {
                     </div>
                   </a>
                 ) : (
-                  <div className="bg-stone-400 text-white px-12 py-4 text-xl rounded-xl text-center">
-                    <div className="flex items-center justify-center space-x-2">
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>Cargando pago seguro...</span>
-                    </div>
-                  </div>
+                  <button
+                    onClick={handleMobileRedirect}
+                    className="w-full bg-amber-600 hover:bg-amber-700 text-white px-12 py-4 text-xl rounded-xl transition-all duration-200 hover:transform hover:scale-105 shadow-2xl font-semibold"
+                    type="button"
+                  >
+                    SÍ, QUIERO ACCESO AL WORKSHOP
+                    <ArrowRight className="ml-2 inline w-5 h-5" />
+                  </button>
                 )}
               </div>
 
