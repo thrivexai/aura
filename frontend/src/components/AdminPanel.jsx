@@ -1,3 +1,4 @@
+// D:\Aura\frontend\src\components\AdminPanel.jsx
 import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -5,14 +6,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { 
-  Users, 
-  TrendingUp, 
-  DollarSign, 
-  Eye, 
+import {
+  Users,
+  TrendingUp,
+  DollarSign,
+  Eye,
   Download,
   Search,
-  Filter,
   BarChart3,
   Clock,
   Mail,
@@ -24,7 +24,7 @@ import {
   X
 } from 'lucide-react';
 import { quizQuestions, trackEvent } from '../mock';
-import { getLeadsFromSupabase, getPurchasesFromSupabase, getMetricsFromSupabase } from '../lib/supabaseClient';
+import { getLeadsFromSupabase, getPurchasesFromSupabase, getMetricsFromSupabase, supabase } from '../lib/supabaseClient';
 
 const AdminPanel = () => {
   const [leads, setLeads] = useState([]);
@@ -57,7 +57,10 @@ const AdminPanel = () => {
   const [leadDetails, setLeadDetails] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
-  const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8001';
+
+  // Helper de porcentaje seguro
+  const pct = (num, den) => (den > 0 ? (num / den) * 100 : 0);
 
   const viewLeadDetails = (lead) => {
     setLeadDetails(lead);
@@ -74,10 +77,8 @@ const AdminPanel = () => {
   };
 
   const handleSaveWebhooks = () => {
-    // Validar URLs
     const isValidUrl = (url) => {
       try {
-        // Permitir URLs relativas (que empiecen con /) o URLs completas
         return url.startsWith('/') || url.startsWith('http://') || url.startsWith('https://');
       } catch {
         return false;
@@ -92,13 +93,12 @@ const AdminPanel = () => {
     setWebhookUrls({ ...tempWebhookUrls });
     localStorage.setItem('aura_webhook_urls', JSON.stringify(tempWebhookUrls));
     setEditingWebhooks(false);
-    
+
     trackEvent('webhook_urls_updated', {
       lead_capture_url: tempWebhookUrls.leadCapture,
       purchase_url: tempWebhookUrls.purchase
     });
 
-    // Mostrar mensaje de éxito
     alert('URLs de webhook actualizadas correctamente');
   };
 
@@ -107,28 +107,47 @@ const AdminPanel = () => {
     setEditingWebhooks(false);
   };
 
+  // === NUEVO: contar quiz_starts y quiz_completions desde quiz_tracking ===
+  const getQuizStatsFromSupabase = async () => {
+    const { count: starts, error: errStarts } = await supabase
+      .from('quiz_tracking')
+      .select('*', { count: 'exact', head: true })
+      .eq('quiz_started', true);
+
+    if (errStarts) throw new Error(`Error conteo quiz_started: ${errStarts.message}`);
+
+    const { count: completes, error: errCompletes } = await supabase
+      .from('quiz_tracking')
+      .select('*', { count: 'exact', head: true })
+      .eq('quiz_completed', true);
+
+    if (errCompletes) throw new Error(`Error conteo quiz_completed: ${errCompletes.message}`);
+
+    return {
+      quizStarts: starts || 0,
+      quizCompletions: completes || 0
+    };
+  };
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
     try {
-      // Obtener datos directamente de Supabase
+      // Obtener datos base
       const [leadsResult, purchasesResult, metricsResult] = await Promise.all([
         getLeadsFromSupabase(),
         getPurchasesFromSupabase(),
         getMetricsFromSupabase()
       ]);
 
-      if (!leadsResult.success) {
-        throw new Error(`Error obteniendo leads: ${leadsResult.error}`);
-      }
-      if (!purchasesResult.success) {
-        throw new Error(`Error obteniendo purchases: ${purchasesResult.error}`);
-      }
-      if (!metricsResult.success) {
-        throw new Error(`Error obteniendo métricas: ${metricsResult.error}`);
-      }
+      if (!leadsResult.success) throw new Error(`Error obteniendo leads: ${leadsResult.error}`);
+      if (!purchasesResult.success) throw new Error(`Error obteniendo purchases: ${purchasesResult.error}`);
+      if (!metricsResult.success) throw new Error(`Error obteniendo métricas: ${metricsResult.error}`);
 
-      // Formatear datos para el frontend
+      // NUEVO: leer quizStarts / quizCompletions de quiz_tracking
+      const { quizStarts, quizCompletions } = await getQuizStatsFromSupabase();
+
+      // Formatear leads
       const formattedLeads = leadsResult.leads.map(lead => ({
         id: lead.session_id || lead.id,
         name: lead.name || 'Sin nombre',
@@ -154,6 +173,7 @@ const AdminPanel = () => {
         sessionId: lead.session_id
       }));
 
+      // Formatear purchases
       const formattedPurchases = purchasesResult.purchases.map(purchase => ({
         id: purchase.session_id || purchase.id,
         name: purchase.name || 'Sin nombre',
@@ -181,16 +201,23 @@ const AdminPanel = () => {
         sessionId: purchase.session_id
       }));
 
+      // Mezclar métricas y recalcular conversión como número a 1 decimal
+      const mergedMetrics = {
+        ...metricsResult.metrics,
+        quizStarts,
+        quizCompletions,
+        conversionRate: Number(pct((metricsResult.metrics?.purchases || 0), (metricsResult.metrics?.totalVisitors || 0)).toFixed(1))
+      };
+
       setLeads(formattedLeads);
       setPurchases(formattedPurchases);
-      setMetrics(metricsResult.metrics);
-      
-      console.log('✅ Datos cargados desde Supabase:', {
+      setMetrics(mergedMetrics);
+
+      console.log('✅ Datos cargados:', {
         leads: formattedLeads.length,
         purchases: formattedPurchases.length,
-        metrics: metricsResult.metrics
+        metrics: mergedMetrics
       });
-      
     } catch (err) {
       console.error('❌ Error obteniendo datos de Supabase:', err);
       setError(err.message);
@@ -200,7 +227,6 @@ const AdminPanel = () => {
   };
 
   useEffect(() => {
-    // Cargar URLs de webhook guardadas
     const savedWebhooks = localStorage.getItem('aura_webhook_urls');
     if (savedWebhooks) {
       try {
@@ -219,15 +245,15 @@ const AdminPanel = () => {
     });
   }, []);
 
-  // Combinar leads y purchases para la vista unificada
-  const allLeads = [...leads, ...purchases].sort((a, b) => 
+  // Combinar leads y purchases
+  const allLeads = [...leads, ...purchases].sort((a, b) =>
     new Date(b.createdAt) - new Date(a.createdAt)
   );
 
   const getStageLabel = (stage) => {
     const stageLabels = {
       'quiz_step_1': 'Quiz Paso 1',
-      'quiz_step_2': 'Quiz Paso 2', 
+      'quiz_step_2': 'Quiz Paso 2',
       'quiz_step_3': 'Quiz Paso 3',
       'quiz_step_4': 'Quiz Paso 4',
       'quiz_step_5': 'Quiz Paso 5',
@@ -243,7 +269,7 @@ const AdminPanel = () => {
     const variants = {
       'quiz_step_1': 'secondary',
       'quiz_step_2': 'secondary',
-      'quiz_step_3': 'secondary', 
+      'quiz_step_3': 'secondary',
       'quiz_step_4': 'secondary',
       'quiz_step_5': 'secondary',
       'lead_capture': 'outline',
@@ -255,13 +281,13 @@ const AdminPanel = () => {
   };
 
   const filteredLeads = allLeads.filter(lead => {
-    const matchesSearch = !filters.search || 
+    const matchesSearch = !filters.search ||
       lead.name.toLowerCase().includes(filters.search.toLowerCase()) ||
       lead.email.toLowerCase().includes(filters.search.toLowerCase());
-    
+
     const matchesStage = filters.stage === 'all' || lead.stage === filters.stage;
     const matchesBusinessType = filters.businessType === 'all' || lead.businessType === filters.businessType;
-    
+
     return matchesSearch && matchesStage && matchesBusinessType;
   });
 
@@ -270,7 +296,7 @@ const AdminPanel = () => {
       total_leads: filteredLeads.length,
       filters: filters
     });
-    
+
     try {
       const response = await fetch(`${backendUrl}/api/export-leads-csv`);
       if (response.ok) {
@@ -295,7 +321,7 @@ const AdminPanel = () => {
       <header className="px-6 py-4 bg-white/90 backdrop-blur-sm border-b border-stone-200">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <img 
+            <img
               src="https://customer-assets.emergentagent.com/job_funnel-ai-fashion/artifacts/agvhelw9_AURA%20LOGO%20BLACK.png"
               alt="AURA"
               className="h-8 w-auto"
@@ -332,7 +358,7 @@ const AdminPanel = () => {
               </Button>
             </div>
           )}
-          
+
           <Tabs defaultValue="dashboard" className="space-y-6">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
@@ -366,7 +392,7 @@ const AdminPanel = () => {
                   <CardContent>
                     <div className="text-2xl font-bold">{metrics.leadsGenerated}</div>
                     <p className="text-xs text-muted-foreground">
-                      Tasa conversión: {((metrics.leadsGenerated / metrics.totalVisitors) * 100).toFixed(1)}%
+                      Tasa conversión: {pct(metrics.leadsGenerated, metrics.totalVisitors).toFixed(1)}%
                     </p>
                   </CardContent>
                 </Card>
@@ -410,17 +436,17 @@ const AdminPanel = () => {
                   <div className="space-y-4">
                     {[
                       { label: 'Visitantes', value: metrics.totalVisitors, percentage: 100 },
-                      { label: 'Iniciaron Quiz', value: metrics.quizStarts, percentage: (metrics.quizStarts / metrics.totalVisitors) * 100 },
-                      { label: 'Completaron Quiz', value: metrics.quizCompletions, percentage: (metrics.quizCompletions / metrics.totalVisitors) * 100 },
-                      { label: 'Se convirtieron en Lead', value: metrics.leadsGenerated, percentage: (metrics.leadsGenerated / metrics.totalVisitors) * 100 },
-                      { label: 'Vieron Diagnóstico', value: metrics.diagnosisViewed, percentage: (metrics.diagnosisViewed / metrics.totalVisitors) * 100 },
-                      { label: 'Fueron a Checkout', value: metrics.checkoutClicks, percentage: (metrics.checkoutClicks / metrics.totalVisitors) * 100 },
-                      { label: 'Compraron', value: metrics.purchases, percentage: (metrics.purchases / metrics.totalVisitors) * 100 }
+                      { label: 'Iniciaron Quiz', value: metrics.quizStarts, percentage: pct(metrics.quizStarts, metrics.totalVisitors) },
+                      { label: 'Completaron Quiz', value: metrics.quizCompletions, percentage: pct(metrics.quizCompletions, metrics.totalVisitors) },
+                      { label: 'Se convirtieron en Lead', value: metrics.leadsGenerated, percentage: pct(metrics.leadsGenerated, metrics.totalVisitors) },
+                      { label: 'Vieron Diagnóstico', value: metrics.diagnosisViewed, percentage: pct(metrics.diagnosisViewed, metrics.totalVisitors) },
+                      { label: 'Fueron a Checkout', value: metrics.checkoutClicks, percentage: pct(metrics.checkoutClicks, metrics.totalVisitors) },
+                      { label: 'Compraron', value: metrics.purchases, percentage: pct(metrics.purchases, metrics.totalVisitors) }
                     ].map((stage, index) => (
                       <div key={index} className="flex items-center space-x-4">
                         <div className="w-32 text-sm font-medium">{stage.label}</div>
                         <div className="flex-1 bg-stone-200 rounded-full h-2">
-                          <div 
+                          <div
                             className="bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full transition-all duration-500"
                             style={{ width: `${stage.percentage}%` }}
                           ></div>
@@ -452,9 +478,9 @@ const AdminPanel = () => {
                         className="pl-8"
                       />
                     </div>
-                    
-                    <Select 
-                      value={filters.stage} 
+
+                    <Select
+                      value={filters.stage}
                       onValueChange={(value) => setFilters(prev => ({ ...prev, stage: value }))}
                     >
                       <SelectTrigger>
@@ -469,8 +495,8 @@ const AdminPanel = () => {
                       </SelectContent>
                     </Select>
 
-                    <Select 
-                      value={filters.businessType} 
+                    <Select
+                      value={filters.businessType}
                       onValueChange={(value) => setFilters(prev => ({ ...prev, businessType: value }))}
                     >
                       <SelectTrigger>
@@ -485,8 +511,8 @@ const AdminPanel = () => {
                       </SelectContent>
                     </Select>
 
-                    <Select 
-                      value={filters.dateRange} 
+                    <Select
+                      value={filters.dateRange}
                       onValueChange={(value) => setFilters(prev => ({ ...prev, dateRange: value }))}
                     >
                       <SelectTrigger>
@@ -523,7 +549,7 @@ const AdminPanel = () => {
                                 {getStageLabel(lead.stage)}
                               </Badge>
                             </div>
-                            
+
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-stone-600">
                               <div className="flex items-center space-x-2">
                                 <Mail className="w-4 h-4" />
@@ -556,10 +582,10 @@ const AdminPanel = () => {
                               </div>
                             </div>
                           </div>
-                          
+
                           <div className="text-right">
-                            <Button 
-                              variant="outline" 
+                            <Button
+                              variant="outline"
                               size="sm"
                               onClick={() => viewLeadDetails(lead)}
                             >
@@ -571,7 +597,7 @@ const AdminPanel = () => {
                       </div>
                     ))}
                   </div>
-                  
+
                   {filteredLeads.length === 0 && !loading && (
                     <div className="text-center py-8 text-stone-500">
                       {allLeads.length === 0 ? (
@@ -585,7 +611,7 @@ const AdminPanel = () => {
                       )}
                     </div>
                   )}
-                  
+
                   {loading && (
                     <div className="text-center py-8">
                       <RefreshCw className="w-8 h-8 mx-auto animate-spin text-stone-400 mb-4" />
@@ -611,7 +637,7 @@ const AdminPanel = () => {
                         const type = lead.businessType || 'sin-especificar';
                         businessTypes[type] = (businessTypes[type] || 0) + 1;
                       });
-                      
+
                       return (
                         <div className="space-y-3">
                           {Object.entries(businessTypes).map(([type, count]) => (
@@ -619,9 +645,9 @@ const AdminPanel = () => {
                               <span className="text-sm capitalize">{type.replace('-', ' ')}</span>
                               <div className="flex items-center space-x-2">
                                 <div className="w-20 bg-stone-200 rounded-full h-2">
-                                  <div 
+                                  <div
                                     className="bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full"
-                                    style={{ width: `${(count / allLeads.length) * 100}%` }}
+                                    style={{ width: `${pct(count, allLeads.length)}%` }}
                                   ></div>
                                 </div>
                                 <span className="text-sm font-medium">{count}</span>
@@ -646,7 +672,7 @@ const AdminPanel = () => {
                         const cost = lead.mainCost || 'sin-especificar';
                         costs[cost] = (costs[cost] || 0) + 1;
                       });
-                      
+
                       return (
                         <div className="space-y-3">
                           {Object.entries(costs).map(([cost, count]) => (
@@ -654,9 +680,9 @@ const AdminPanel = () => {
                               <span className="text-sm capitalize">{cost.replace('-', ' ')}</span>
                               <div className="flex items-center space-x-2">
                                 <div className="w-20 bg-stone-200 rounded-full h-2">
-                                  <div 
+                                  <div
                                     className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full"
-                                    style={{ width: `${(count / allLeads.length) * 100}%` }}
+                                    style={{ width: `${pct(count, allLeads.length)}%` }}
                                   ></div>
                                 </div>
                                 <span className="text-sm font-medium">{count}</span>
@@ -681,7 +707,7 @@ const AdminPanel = () => {
                         const obj = lead.objective || 'sin-especificar';
                         objectives[obj] = (objectives[obj] || 0) + 1;
                       });
-                      
+
                       return (
                         <div className="space-y-3">
                           {Object.entries(objectives).map(([obj, count]) => (
@@ -689,9 +715,9 @@ const AdminPanel = () => {
                               <span className="text-sm capitalize">{obj.replace('-', ' ')}</span>
                               <div className="flex items-center space-x-2">
                                 <div className="w-20 bg-stone-200 rounded-full h-2">
-                                  <div 
+                                  <div
                                     className="bg-gradient-to-r from-green-500 to-teal-500 h-2 rounded-full"
-                                    style={{ width: `${(count / allLeads.length) * 100}%` }}
+                                    style={{ width: `${pct(count, allLeads.length)}%` }}
                                   ></div>
                                 </div>
                                 <span className="text-sm font-medium">{count}</span>
@@ -716,7 +742,7 @@ const AdminPanel = () => {
                         const usage = lead.aiUsage || 'sin-especificar';
                         aiUsage[usage] = (aiUsage[usage] || 0) + 1;
                       });
-                      
+
                       return (
                         <div className="space-y-3">
                           {Object.entries(aiUsage).map(([usage, count]) => (
@@ -724,9 +750,9 @@ const AdminPanel = () => {
                               <span className="text-sm capitalize">{usage.replace('-', ' ')}</span>
                               <div className="flex items-center space-x-2">
                                 <div className="w-20 bg-stone-200 rounded-full h-2">
-                                  <div 
+                                  <div
                                     className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full"
-                                    style={{ width: `${(count / allLeads.length) * 100}%` }}
+                                    style={{ width: `${pct(count, allLeads.length)}%` }}
                                   ></div>
                                 </div>
                                 <span className="text-sm font-medium">{count}</span>
@@ -749,17 +775,17 @@ const AdminPanel = () => {
                   {(() => {
                     const stages = {
                       'lead_capture': 'Captura de Lead',
-                      'diagnosis': 'Diagnóstico', 
+                      'diagnosis': 'Diagnóstico',
                       'checkout': 'Checkout',
                       'purchased': 'Comprado'
                     };
-                    
+
                     const stageData = Object.entries(stages).map(([stage, label]) => {
                       const count = allLeads.filter(lead => lead.stage === stage).length;
-                      const percentage = allLeads.length > 0 ? (count / allLeads.length) * 100 : 0;
+                      const percentage = pct(count, allLeads.length);
                       return { stage, label, count, percentage };
                     });
-                    
+
                     return (
                       <div className="space-y-4">
                         {stageData.map(({ stage, label, count, percentage }) => (
@@ -770,7 +796,7 @@ const AdminPanel = () => {
                             </div>
                             <div className="flex items-center space-x-3">
                               <div className="w-32 bg-stone-200 rounded-full h-2">
-                                <div 
+                                <div
                                   className="bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full"
                                   style={{ width: `${percentage}%` }}
                                 ></div>
@@ -822,7 +848,7 @@ const AdminPanel = () => {
                     <div>
                       <label className="text-sm font-medium text-stone-700">Webhook Lead Capture</label>
                       {editingWebhooks ? (
-                        <Input 
+                        <Input
                           value={tempWebhookUrls.leadCapture}
                           onChange={(e) => setTempWebhookUrls(prev => ({
                             ...prev,
@@ -832,9 +858,9 @@ const AdminPanel = () => {
                           className="mt-1 font-mono text-xs"
                         />
                       ) : (
-                        <Input 
-                          value={webhookUrls.leadCapture} 
-                          disabled 
+                        <Input
+                          value={webhookUrls.leadCapture}
+                          disabled
                           className="mt-1 font-mono text-xs"
                         />
                       )}
@@ -843,7 +869,7 @@ const AdminPanel = () => {
                     <div>
                       <label className="text-sm font-medium text-stone-700">Webhook Purchase</label>
                       {editingWebhooks ? (
-                        <Input 
+                        <Input
                           value={tempWebhookUrls.purchase}
                           onChange={(e) => setTempWebhookUrls(prev => ({
                             ...prev,
@@ -853,15 +879,15 @@ const AdminPanel = () => {
                           className="mt-1 font-mono text-xs"
                         />
                       ) : (
-                        <Input 
-                          value={webhookUrls.purchase} 
-                          disabled 
+                        <Input
+                          value={webhookUrls.purchase}
+                          disabled
                           className="mt-1 font-mono text-xs"
                         />
                       )}
                       <p className="text-xs text-stone-500 mt-1">Se ejecuta cuando se completa una compra</p>
                     </div>
-                    
+
                     {editingWebhooks && (
                       <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                         <p className="text-sm text-blue-700">
@@ -956,15 +982,15 @@ const AdminPanel = () => {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <Button 
-                        onClick={exportLeads} 
-                        variant="outline" 
+                      <Button
+                        onClick={exportLeads}
+                        variant="outline"
                         className="w-full"
                       >
                         <Download className="w-4 h-4 mr-2" />
                         Exportar Todos los Leads Completo (CSV)
                       </Button>
-                      <Button 
+                      <Button
                         onClick={async () => {
                           try {
                             const response = await fetch(`${backendUrl}/api/export-purchases-csv`);
@@ -982,8 +1008,8 @@ const AdminPanel = () => {
                           } catch (error) {
                             console.error('Error exporting purchases:', error);
                           }
-                        }} 
-                        variant="outline" 
+                        }}
+                        variant="outline"
                         className="w-full"
                       >
                         <Download className="w-4 h-4 mr-2" />
@@ -1004,15 +1030,15 @@ const AdminPanel = () => {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold text-stone-900">Detalles del Lead</h2>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="sm"
                     onClick={() => setShowModal(false)}
                   >
                     ✕
                   </Button>
                 </div>
-                
+
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -1024,7 +1050,7 @@ const AdminPanel = () => {
                       <p className="text-stone-900">{leadDetails.email}</p>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium text-stone-600">WhatsApp</label>

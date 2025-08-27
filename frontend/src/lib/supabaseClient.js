@@ -1,9 +1,18 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://ktcxuiexzdtwjnhnppoj.supabase.co'
-const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0Y3h1aWV4emR0d2puaG5wcG9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwOTM3MzQsImV4cCI6MjA3MTY2OTczNH0.bAqgwkaQ9XVMv8NoxjzTJw1oiUbcSgF30axYksX5IPc'
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ktcxuiexzdtwjnhnppoj.supabase.co'
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0Y3h1aWV4emR0d2puaG5wcG9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwOTM3MzQsImV4cCI6MjA3MTY2OTczNH0.bAqgwkaQ9XVMv8NoxjzTJw1oiUbcSgF30axYksX5IPc'
 
-export const supabase = createClient(supabaseUrl, supabaseKey)
+// Configuración global de headers
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  global: {
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': supabaseKey,
+      'Authorization': `Bearer ${supabaseKey}`
+    }
+  }
+})
 
 // Función para guardar lead capture en Supabase
 export const saveLeadCapture = async (leadData, quizAnswers, clientInfo) => {

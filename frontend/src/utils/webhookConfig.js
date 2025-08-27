@@ -2,7 +2,7 @@
 // Configuración de webhooks - URLs editables desde admin panel
 
 // Base de API desde env (sin barra final)
-const API_BASE = (process.env.REACT_APP_BACKEND_URL || '').replace(/\/+$/, '');
+const API_BASE = (import.meta.env.VITE_BACKEND_URL || '').replace(/\/+$/, '');
 
 export const getWebhookUrls = () => {
   // Si hay API_BASE, define defaults ABSOLUTAS hacia ese backend.

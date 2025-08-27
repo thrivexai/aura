@@ -371,9 +371,9 @@ export const trackEvent = (eventName, properties = {}) => {
     window.gtag('event', eventName, properties);
   }
   
-  // Simular envío a Meta Pixel  
-  if (window.fbq) {
-    window.fbq('track', eventName, properties);
+  // Simular envío a Meta Pixel (deshabilitado en desarrollo)
+  if (window.fbq && process.env.NODE_ENV === 'production') {
+    window.fbq('trackCustom', eventName, properties);
   }
   
   // Simular envío a TikTok Pixel

@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+// D:\Aura\frontend\src\components\LeadCapture.js
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
@@ -9,6 +11,8 @@ import { FunnelContext } from '../App';
 import { trackEvent } from '../mock';
 import { sendLeadCaptureWebhook, saveUTMParameters, getClientInfo } from '../utils/webhooks';
 import { saveLeadCapture } from '../lib/supabaseClient';
+import { supabase } from '../lib/supabaseClient';
+import { getOrInitSessionId, getOrFetchGeo } from '../utils/visitorTracking';
 
 // Teléfono con buscador de países
 import PhoneInput from 'react-phone-input-2';
@@ -26,60 +30,98 @@ const LeadCapture = () => {
     whatsapp_country_iso2: '',    // ej. "pe", "mx"
     whatsapp_dial_code: '',       // ej. "51", "52"
     consent: false,
-    client_ip: ''                 // IP pública detectada
+    client_ip: ''                 // IP pública detectada (cache por sesión)
   });
 
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [defaultCountry, setDefaultCountry] = useState('us');
 
-  // Al montar: guardar UTM y detectar país + IP (con timeout y fallback)
+  // 1) Al montar: guardar UTM y establecer sessionId unificado
   useEffect(() => {
     saveUTMParameters();
+    // Always get or create session ID and ensure it's in the funnel data
+    const sid = getOrInitSessionId();
+    console.log('[LeadCapture] Session ID:', sid);
+    
+    // Update funnel data with the session ID if it's not set or different
+    if (sid && (!funnelData?.sessionId || funnelData.sessionId !== sid)) {
+      console.log('[LeadCapture] Updating session ID in funnel data');
+      setFunnelData(prev => ({ ...prev, sessionId: sid }));
+    }
     trackEvent('lead_form_view', {
-      quiz_completed: Object.keys(funnelData.answers).length > 0
+      quiz_completed: Object.keys(funnelData?.answers || {}).length > 0
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    const detectCountryAndIP = async () => {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 4000);
+  // 2) GEO cacheado por sesión (usa ipapi solo si no está en cache)
+  useEffect(() => {
+    const setupGeo = async () => {
+      // Always get the latest session ID to ensure consistency
+      const sid = getOrInitSessionId();
+      console.log('[LeadCapture] Using session ID for geo:', sid);
+      const { ip, country_code } = await getOrFetchGeo(sid);
 
-      try {
-        const r = await fetch('https://ipapi.co/json/', { signal: controller.signal });
-        if (!r.ok) throw new Error('ipapi error');
-        const data = await r.json();
-        if (data && data.country_code) {
-          setDefaultCountry(String(data.country_code).toLowerCase());
-        }
-        if (data && data.ip) {
-          setFormData(prev => ({ ...prev, client_ip: data.ip }));
-        }
-      } catch (_) {
-        // Fallback IP si ipapi falla
-        try {
-          const r2 = await fetch('https://api64.ipify.org?format=json');
-          const d2 = await r2.json();
-          if (d2 && d2.ip) {
-            setFormData(prev => ({ ...prev, client_ip: d2.ip }));
-          }
-        } catch {}
-        // País por defecto si no se pudo detectar
-        setDefaultCountry('us');
-      } finally {
-        clearTimeout(timeout);
+      if (ip) {
+        setFormData(prev => ({ ...prev, client_ip: ip }));
+      }
+      if (country_code) {
+        setDefaultCountry(String(country_code).toLowerCase());
       }
     };
+    setupGeo();
+  }, [funnelData?.sessionId]);
 
-    detectCountryAndIP();
-  }, [funnelData.answers]);
+  // 3) Marcar quiz_completed apenas haya un sessionId
+  useEffect(() => {
+    // Always get the latest session ID to ensure consistency
+    const sessionId = getOrInitSessionId();
+    console.log('[LeadCapture] Using session ID for quiz completion:', sessionId);
+    
+    if (!sessionId) {
+      console.warn('[quiz_tracking] No se pudo obtener sessionId -> se omite upsert.');
+      return;
+    }
+    
+    // Ensure funnel data has the latest session ID
+    if (!funnelData?.sessionId || funnelData.sessionId !== sessionId) {
+      setFunnelData(prev => ({ ...prev, sessionId }));
+    }
 
-  // Normaliza teléfono a +E164 (quitar espacios/guiones y asegurar que empiece con '+')
+    let cancelled = false;
+
+    (async () => {
+      console.log('[quiz_tracking] Upserting quiz_completed=true para session:', sessionId);
+      const { data, error } = await supabase
+        .from('quiz_tracking')
+        .upsert(
+          { session_id: sessionId, quiz_completed: true },
+          { onConflict: 'session_id' }
+        )
+        .select();
+
+      if (cancelled) return;
+
+      if (error) {
+        console.error('[quiz_tracking] Error en upsert:', error);
+      } else if (!data || data.length === 0) {
+        console.warn('[quiz_tracking] Upsert no devolvió filas (¿RLS/PK?):', data);
+      } else {
+        console.log('[quiz_tracking] OK upsert:', data);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [funnelData?.sessionId]);
+
+  // Normaliza teléfono a +E164
   const normalizeIntlPhone = (val) => {
     const digits = (val || '').replace(/[^\d+]/g, '');
     return digits.startsWith('+') ? digits : (digits ? `+${digits}` : '');
   };
 
-  // Validación que devuelve errores "frescos"
+  // Validación
   const validateForm = () => {
     const newErrors = {};
 
@@ -90,9 +132,6 @@ const LeadCapture = () => {
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'El email no es válido';
     }
-
-    // Si lo haces obligatorio, descomenta:
-    // if (!formData.whatsapp) newErrors.whatsapp = 'El WhatsApp es requerido';
 
     if (!formData.consent) newErrors.consent = 'Debes aceptar la política de privacidad';
 
@@ -106,9 +145,17 @@ const LeadCapture = () => {
   };
 
   const handleSubmit = async (e) => {
-    console.log('handleSubmit called');
     e.preventDefault();
-
+    
+    // Get the latest session ID for form submission
+    const sessionId = getOrInitSessionId();
+    console.log('[LeadCapture] Using session ID for form submission:', sessionId);
+    
+    if (!sessionId) {
+      console.error('[LeadCapture] No se pudo obtener sessionId para el envío del formulario');
+      return;
+    }
+    
     const { valid, newErrors } = validateForm();
     if (!valid) {
       trackEvent('lead_submit_attempt', { success: false, errors: Object.keys(newErrors) });
@@ -134,12 +181,11 @@ const LeadCapture = () => {
         currentStep: 2
       }));
 
-
-      // Enviar webhook externo (mantener funcionando como está)
-      console.log('Calling sendLeadCaptureWebhook', normalizedFormData, funnelData.answers);
+      // Enviar webhook externo
+      console.log('Calling sendLeadCaptureWebhook', normalizedFormData, funnelData?.answers);
       const webhookResult = await sendLeadCaptureWebhook(
         normalizedFormData,
-        funnelData.answers
+        funnelData?.answers || {}
       );
       if (webhookResult.success) {
         console.log('✅ Webhook externo enviado exitosamente:', webhookResult.data);
@@ -147,24 +193,40 @@ const LeadCapture = () => {
         console.error('⚠️ Error en webhook externo:', webhookResult.error);
       }
 
-      // NUEVO: Guardar también en Supabase directamente
+      // Guardar también en Supabase directamente (datos del lead)
       const clientInfo = getClientInfo();
-      const supabaseResult = await saveLeadCapture(
-        normalizedFormData,
-        funnelData.answers,
-        clientInfo
+      
+      // Prepare lead data
+      const leadData = {
+        session_id: sessionId,
+        ...formData,
+        utm_source: funnelData.utm_source,
+        utm_medium: funnelData.utm_medium,
+        utm_campaign: funnelData.utm_campaign,
+        utm_content: funnelData.utm_content,
+        utm_term: funnelData.utm_term,
+      };
+
+      // Call saveLeadCapture with correct parameters
+      const response = await saveLeadCapture(
+        leadData,
+        JSON.stringify(funnelData.answers || {}),
+        {
+          ...clientInfo,
+          sessionId: sessionId // Ensure sessionId is included in clientInfo
+        }
       );
 
-      if (supabaseResult.success) {
-        console.log('✅ Datos guardados en Supabase exitosamente:', supabaseResult.data);
+      if (response.success) {
+        console.log('✅ Datos guardados en Supabase exitosamente:', response.data);
       } else {
-        console.error('⚠️ Error guardando en Supabase:', supabaseResult.error);
+        console.error('⚠️ Error guardando en Supabase:', response.error);
       }
 
       trackEvent('lead_submitted', {
         success: true,
         has_whatsapp: Boolean(normalizedFormData.whatsapp),
-        quiz_answers_count: Object.keys(funnelData.answers).length,
+        quiz_answers_count: Object.keys(funnelData?.answers || {}).length,
         webhook_sent: webhookResult.success,
         whatsapp_country_iso2: normalizedFormData.whatsapp_country_iso2 || defaultCountry,
         client_ip: normalizedFormData.client_ip
@@ -198,7 +260,7 @@ const LeadCapture = () => {
         </div>
       </header>
 
-      <main className="px-6 py-12 pt-24">{/* pt-24 para compensar header fijo */}
+      <main className="px-6 py-12 pt-24">
         <div className="max-w-2xl mx-auto">
           {/* Hero Section */}
           <div className="text-center mb-12">
@@ -271,12 +333,11 @@ const LeadCapture = () => {
                 </Label>
                 <div className="mt-2">
                   <PhoneInput
-                    key={defaultCountry}               // fuerza remount cuando cambia el país detectado
+                    key={defaultCountry}
                     country={defaultCountry}
                     enableSearch
                     value={formData.whatsapp}
                     onChange={(value, country) => {
-                      // country: { name, dialCode, countryCode, ... }
                       handleInputChange('whatsapp', value);
                       handleInputChange('whatsapp_country_iso2', country?.countryCode || '');
                       handleInputChange('whatsapp_dial_code', country?.dialCode || '');
