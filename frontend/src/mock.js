@@ -362,31 +362,61 @@ export const mockMetrics = {
   }
 };
 
-// UTM tracking mock
+// UTM tracking mock (filtrado por plataforma)
+const META_ALLOWED_EVENTS = new Set(['quiz_start']); 
+// ↑ Solo estos eventos se enviarán a Meta (fbq). Déjalo vacío para NO enviar ninguno.
+// Ej: new Set()  -> no manda nada a Meta
+// Ej: new Set(['quiz_start']) -> solo manda quiz_start
+
+// Si quieres restringir también GA o TikTok, cambia null por un Set([...])
+const GA_ALLOWED_EVENTS = null; // null = permitir todos a GA
+const TT_ALLOWED_EVENTS = null; // null = permitir todos a TikTok
+
 export const trackEvent = (eventName, properties = {}) => {
-  console.log(`🔍 Track Event: ${eventName}`, properties);
-  
-  // Simular envío a Google Analytics
-  if (window.gtag) {
-    window.gtag('event', eventName, properties);
+  // 1) Log interno / debug
+  try {
+    console.log(`🔍 Track Event: ${eventName}`, properties);
+  } catch (e) {
+    // no-op
   }
-  
-  // Simular envío a Meta Pixel (deshabilitado en desarrollo)
-  if (window.fbq && process.env.NODE_ENV === 'production') {
-    window.fbq('trackCustom', eventName, properties);
+
+  // 2) Google Analytics (gtag)
+  try {
+    if (window.gtag && (!GA_ALLOWED_EVENTS || GA_ALLOWED_EVENTS.has(eventName))) {
+      window.gtag('event', eventName, properties);
+    }
+  } catch (e) {
+    console.warn('GA track suppressed/error:', e);
   }
-  
-  // Simular envío a TikTok Pixel
-  if (window.ttq) {
-    window.ttq.track(eventName, properties);
+
+  // 3) Meta Pixel (fbq): **solo** si el evento está permitido
+  try {
+    if (window.fbq && process.env.NODE_ENV === 'production' && META_ALLOWED_EVENTS.has(eventName)) {
+      window.fbq('trackCustom', eventName, properties);
+    }
+  } catch (e) {
+    console.warn('Meta fbq suppressed/error:', e);
   }
-  
-  // Guardar en localStorage para desarrollo
-  const events = JSON.parse(localStorage.getItem('aura_events') || '[]');
-  events.push({
-    event: eventName,
-    properties,
-    timestamp: new Date().toISOString()
-  });
-  localStorage.setItem('aura_events', JSON.stringify(events));
+
+  // 4) TikTok Pixel (ttq)
+  try {
+    if (window.ttq && (!TT_ALLOWED_EVENTS || TT_ALLOWED_EVENTS.has(eventName))) {
+      window.ttq.track(eventName, properties);
+    }
+  } catch (e) {
+    console.warn('TikTok track suppressed/error:', e);
+  }
+
+  // 5) Persistencia local para debug (opcional)
+  try {
+    const events = JSON.parse(localStorage.getItem('aura_events') || '[]');
+    events.push({
+      event: eventName,
+      properties,
+      timestamp: new Date().toISOString()
+    });
+    localStorage.setItem('aura_events', JSON.stringify(events));
+  } catch (e) {
+    // no-op
+  }
 };
