@@ -1,19 +1,21 @@
 [build]
   base = "frontend"
-  command = "npm run build"
-  publish = "build"
+  command = "npm ci && npm run build"
+  publish = "dist"
   
 [build.environment]
   NODE_VERSION = "20.11.1"
   NPM_FLAGS = "--legacy-peer-deps"
 
+# Proxy de /api/* (lo que ya tenías)
 [[redirects]]
   from = "/api/*"
   to = "https://aura.thrivesx.com/:splat"
   status = 200
   force = true
 
-# Configuración de caché
-[[caching]]
-  directory = "/node_modules"
-  paths = ["/node_modules/**", "/.cache/**"]
+# SPA fallback para React Router
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
