@@ -112,7 +112,7 @@ const LeadCapture = () => {
     return digits.startsWith('+') ? digits : (digits ? `+${digits}` : '');
   };
 
-  // Validación
+  // Validación (WhatsApp obligatorio con patrón E.164 básico)
   const validateForm = () => {
     const newErrors = {};
 
@@ -122,6 +122,17 @@ const LeadCapture = () => {
       newErrors.email = 'El email es requerido';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'El email no es válido';
+    }
+
+    // ✅ WhatsApp obligatorio
+    const normalizedPhone = normalizeIntlPhone(formData.whatsapp);
+    // E.164: + y 8–15 dígitos (ajusta mínimos según tu criterio)
+    const e164Like = /^\+[1-9]\d{7,14}$/;
+
+    if (!normalizedPhone) {
+      newErrors.whatsapp = 'El WhatsApp es requerido';
+    } else if (!e164Like.test(normalizedPhone)) {
+      newErrors.whatsapp = 'Ingresa un número válido con código de país (formato +5511999999999)';
     }
 
     if (!formData.consent) newErrors.consent = 'Debes aceptar la política de privacidad';
@@ -156,11 +167,10 @@ const LeadCapture = () => {
     setIsLoading(true);
 
     try {
-      // Asegura tener IP por si aún no la capturó el effect (sin re-fetch redundante si ya está cacheado)
+      // Asegura tener IP
       if (!formData.client_ip) {
         const geo = await getOrFetchGeo(sessionId);
         if (geo?.ip) {
-          // ⭐ CAMBIO: Garantizamos client_ip antes de enviar
           setFormData(prev => ({ ...prev, client_ip: geo.ip }));
         }
       }
@@ -185,7 +195,6 @@ const LeadCapture = () => {
       const clientInfo = getClientInfo();
 
       // === WEBHOOK EXTERNO ===
-      // ⭐ CAMBIO: Aseguramos que el webhook reciba el MISMO session_id + UTM + clientInfo
       const webhookPayload = {
         ...normalizedFormData,
         session_id: sessionId,
@@ -202,7 +211,7 @@ const LeadCapture = () => {
 
       console.log('Calling sendLeadCaptureWebhook', webhookPayload, funnelData?.answers);
       const webhookResult = await sendLeadCaptureWebhook(
-        webhookPayload,                  // ⭐ CAMBIO: enviamos payload unificado con session_id
+        webhookPayload,
         funnelData?.answers || {}
       );
       if (webhookResult.success) {
@@ -212,7 +221,6 @@ const LeadCapture = () => {
       }
 
       // === SUPABASE ===
-      // ⭐ Mantiene el mismo session_id también aquí
       const leadData = {
         session_id: sessionId,
         ...normalizedFormData,
@@ -228,7 +236,7 @@ const LeadCapture = () => {
         JSON.stringify(funnelData.answers || {}),
         {
           ...clientInfo,
-          sessionId // ya venía en webhook; aquí también lo enviamos por consistencia
+          sessionId
         }
       );
 
@@ -341,10 +349,10 @@ const LeadCapture = () => {
                 )}
               </div>
 
-              {/* WhatsApp con buscador y formato internacional */}
+              {/* WhatsApp con buscador y formato internacional (OBLIGATORIO) */}
               <div>
                 <Label htmlFor="whatsapp" className="text-stone-700 font-medium">
-                  WhatsApp (opcional)
+                  WhatsApp *
                 </Label>
                 <div className="mt-2">
                   <PhoneInput
@@ -357,7 +365,7 @@ const LeadCapture = () => {
                       handleInputChange('whatsapp_country_iso2', country?.countryCode || '');
                       handleInputChange('whatsapp_dial_code', country?.dialCode || '');
                     }}
-                    inputProps={{ name: 'whatsapp', id: 'whatsapp', autoComplete: 'tel' }}
+                    inputProps={{ name: 'whatsapp', id: 'whatsapp', autoComplete: 'tel', required: true }}
                     containerClass="!w-full"
                     inputClass="!w-full !h-10 !bg-white !text-stone-900 !border-stone-300 !rounded-md"
                     buttonClass="!bg-white !border-stone-300 !rounded-l-md"
