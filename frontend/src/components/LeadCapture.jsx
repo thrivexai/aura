@@ -40,11 +40,9 @@ const LeadCapture = () => {
   // 1) Al montar: guardar UTM y establecer sessionId unificado
   useEffect(() => {
     saveUTMParameters();
-    // Always get or create session ID and ensure it's in the funnel data
     const sid = getOrInitSessionId();
     console.log('[LeadCapture] Session ID:', sid);
-    
-    // Update funnel data with the session ID if it's not set or different
+
     if (sid && (!funnelData?.sessionId || funnelData.sessionId !== sid)) {
       console.log('[LeadCapture] Updating session ID in funnel data');
       setFunnelData(prev => ({ ...prev, sessionId: sid }));
@@ -58,33 +56,26 @@ const LeadCapture = () => {
   // 2) GEO cacheado por sesión (usa ipapi solo si no está en cache)
   useEffect(() => {
     const setupGeo = async () => {
-      // Always get the latest session ID to ensure consistency
       const sid = getOrInitSessionId();
       console.log('[LeadCapture] Using session ID for geo:', sid);
       const { ip, country_code } = await getOrFetchGeo(sid);
 
-      if (ip) {
-        setFormData(prev => ({ ...prev, client_ip: ip }));
-      }
-      if (country_code) {
-        setDefaultCountry(String(country_code).toLowerCase());
-      }
+      if (ip) setFormData(prev => ({ ...prev, client_ip: ip }));
+      if (country_code) setDefaultCountry(String(country_code).toLowerCase());
     };
     setupGeo();
   }, [funnelData?.sessionId]);
 
   // 3) Marcar quiz_completed apenas haya un sessionId
   useEffect(() => {
-    // Always get the latest session ID to ensure consistency
     const sessionId = getOrInitSessionId();
     console.log('[LeadCapture] Using session ID for quiz completion:', sessionId);
-    
+
     if (!sessionId) {
       console.warn('[quiz_tracking] No se pudo obtener sessionId -> se omite upsert.');
       return;
     }
-    
-    // Ensure funnel data has the latest session ID
+
     if (!funnelData?.sessionId || funnelData.sessionId !== sessionId) {
       setFunnelData(prev => ({ ...prev, sessionId }));
     }
@@ -146,16 +137,16 @@ const LeadCapture = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Get the latest session ID for form submission
+
+    // === Sesión unificada para TODO (webhook + supabase) ===
     const sessionId = getOrInitSessionId();
     console.log('[LeadCapture] Using session ID for form submission:', sessionId);
-    
+
     if (!sessionId) {
       console.error('[LeadCapture] No se pudo obtener sessionId para el envío del formulario');
       return;
     }
-    
+
     const { valid, newErrors } = validateForm();
     if (!valid) {
       trackEvent('lead_submit_attempt', { success: false, errors: Object.keys(newErrors) });
@@ -165,6 +156,15 @@ const LeadCapture = () => {
     setIsLoading(true);
 
     try {
+      // Asegura tener IP por si aún no la capturó el effect (sin re-fetch redundante si ya está cacheado)
+      if (!formData.client_ip) {
+        const geo = await getOrFetchGeo(sessionId);
+        if (geo?.ip) {
+          // ⭐ CAMBIO: Garantizamos client_ip antes de enviar
+          setFormData(prev => ({ ...prev, client_ip: geo.ip }));
+        }
+      }
+
       // Simular envío a backend
       await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -181,10 +181,28 @@ const LeadCapture = () => {
         currentStep: 2
       }));
 
-      // Enviar webhook externo
-      console.log('Calling sendLeadCaptureWebhook', normalizedFormData, funnelData?.answers);
+      // Cliente/Device info
+      const clientInfo = getClientInfo();
+
+      // === WEBHOOK EXTERNO ===
+      // ⭐ CAMBIO: Aseguramos que el webhook reciba el MISMO session_id + UTM + clientInfo
+      const webhookPayload = {
+        ...normalizedFormData,
+        session_id: sessionId,
+        utm_source: funnelData.utm_source,
+        utm_medium: funnelData.utm_medium,
+        utm_campaign: funnelData.utm_campaign,
+        utm_content: funnelData.utm_content,
+        utm_term: funnelData.utm_term,
+        client_info: {
+          ...clientInfo,
+          sessionId // redundante pero útil si tu receptor lo espera con otra key
+        }
+      };
+
+      console.log('Calling sendLeadCaptureWebhook', webhookPayload, funnelData?.answers);
       const webhookResult = await sendLeadCaptureWebhook(
-        normalizedFormData,
+        webhookPayload,                  // ⭐ CAMBIO: enviamos payload unificado con session_id
         funnelData?.answers || {}
       );
       if (webhookResult.success) {
@@ -193,13 +211,11 @@ const LeadCapture = () => {
         console.error('⚠️ Error en webhook externo:', webhookResult.error);
       }
 
-      // Guardar también en Supabase directamente (datos del lead)
-      const clientInfo = getClientInfo();
-      
-      // Prepare lead data
+      // === SUPABASE ===
+      // ⭐ Mantiene el mismo session_id también aquí
       const leadData = {
         session_id: sessionId,
-        ...formData,
+        ...normalizedFormData,
         utm_source: funnelData.utm_source,
         utm_medium: funnelData.utm_medium,
         utm_campaign: funnelData.utm_campaign,
@@ -207,13 +223,12 @@ const LeadCapture = () => {
         utm_term: funnelData.utm_term,
       };
 
-      // Call saveLeadCapture with correct parameters
       const response = await saveLeadCapture(
         leadData,
         JSON.stringify(funnelData.answers || {}),
         {
           ...clientInfo,
-          sessionId: sessionId // Ensure sessionId is included in clientInfo
+          sessionId // ya venía en webhook; aquí también lo enviamos por consistencia
         }
       );
 

@@ -15,8 +15,9 @@ export const getSessionId = () => {
 };
 
 export const setSessionId = (sessionId) => {
-  // Persiste en cookie; ajusta SameSite/Secure según tu dominio/https
-  document.cookie = `sessionId=${sessionId}; path=/; SameSite=Lax`;
+  // Persiste en cookie de SESIÓN (sin expires). Ajusta SameSite/Secure en prod HTTPS.
+  const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `sessionId=${sessionId}; path=/; SameSite=Lax${secure}`;
 };
 
 export const getOrInitSessionId = () => {
@@ -30,47 +31,100 @@ export const getOrInitSessionId = () => {
 };
 
 // ======================================
-// Geo cacheado por sesión (IP + país)
+/* Geo cacheado por sesión (IP + país)
+   - Usa sessionStorage para “una vez por sesión/pestaña”.
+   - Dedupe en memoria para evitar fetchs concurrentes. */
 // ======================================
 const GEO_CACHE_KEY = (sid) => `geo_by_session:${sid}`;
+const inflightGeoBySid = new Map(); // sid -> Promise
 
-/**
- * Devuelve { ip, country_code } cacheado por sessionId.
- * Si no hay cache, llama a ipapi.co UNA sola vez por sessionId y lo guarda.
- */
-export const getOrFetchGeo = async (sessionId) => {
+const getCachedGeo = (sid) => {
   try {
-    const cached = localStorage.getItem(GEO_CACHE_KEY(sessionId));
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      if (parsed && (parsed.ip || parsed.country_code)) {
-        return parsed;
-      }
-    }
-  } catch (e) {
-    console.warn('[visitorTracking] Error leyendo geo cache:', e);
+    const raw = sessionStorage.getItem(GEO_CACHE_KEY(sid));
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
   }
+};
 
-  // No hay cache -> fetch a ipapi.co (una sola vez por sessionId)
-  let result = { ip: null, country_code: null };
+const saveGeoCache = (sid, geo) => {
   try {
-    const resp = await fetch('https://ipapi.co/json/');
-    if (resp.ok) {
-      const json = await resp.json();
-      result.ip = json?.ip || null;
-      result.country_code = json?.country_code || null;
-    }
+    sessionStorage.setItem(GEO_CACHE_KEY(sid), JSON.stringify(geo));
+  } catch {}
+};
+
+// Timeout helper
+const withTimeout = (ms, promise) =>
+  new Promise((resolve, reject) => {
+    const id = setTimeout(() => reject(new Error('timeout')), ms);
+    promise
+      .then((res) => {
+        clearTimeout(id);
+        resolve(res);
+      })
+      .catch((err) => {
+        clearTimeout(id);
+        reject(err);
+      });
+  });
+
+const fetchGeoFromIpapi = async () => {
+  try {
+    const resp = await withTimeout(3500, fetch('https://ipapi.co/json/'));
+    if (!resp.ok) throw new Error(`ipapi status ${resp.status}`);
+    const j = await resp.json();
+    return {
+      ip: j?.ip || null,
+      // ipapi usa "country" (ISO-2). Algunos wrappers exponen "country_code".
+      country_code: j?.country_code || j?.country || null,
+      country_name: j?.country_name || null,
+      source: 'ipapi',
+      ts: Date.now(),
+    };
   } catch (e) {
     console.error('[visitorTracking] ipapi.co fallo:', e);
+    return {
+      ip: null,
+      country_code: null,
+      country_name: null,
+      source: 'fallback',
+      ts: Date.now(),
+    };
+  }
+};
+
+/** Devuelve { ip, country_code } desde cache o hace 1 fetch por sesión (con dedupe) */
+export const getOrFetchGeo = async (sessionId) => {
+  const sid = sessionId || getOrInitSessionId();
+
+  // 1) Cache de sesión
+  const cached = getCachedGeo(sid);
+  if (cached && (cached.ip || cached.country_code)) return cached;
+
+  // 2) Si ya hay un fetch en vuelo para este sid, reutilizarlo
+  if (inflightGeoBySid.has(sid)) {
+    return inflightGeoBySid.get(sid);
   }
 
-  try {
-    localStorage.setItem(GEO_CACHE_KEY(sessionId), JSON.stringify(result));
-  } catch (e) {
-    console.warn('[visitorTracking] Error guardando geo cache:', e);
-  }
+  // 3) Lanzar fetch y cachearlo
+  const p = (async () => {
+    const geo = await fetchGeoFromIpapi();
+    saveGeoCache(sid, geo);
+    inflightGeoBySid.delete(sid);
+    return geo;
+  })();
 
-  return result;
+  inflightGeoBySid.set(sid, p);
+  return p;
+};
+
+/** Prefetch cómodo para Landing (garantiza que quede cacheado) */
+export const ensureGeoCached = async (sessionId) => {
+  const sid = sessionId || getOrInitSessionId();
+  const cached = getCachedGeo(sid);
+  if (cached && (cached.ip || cached.country_code)) return cached;
+  return getOrFetchGeo(sid);
 };
 
 // ======================================
@@ -82,8 +136,8 @@ export const trackVisitor = async (location) => {
 
   const userAgent = navigator.userAgent || '';
   const referrer = document.referrer || '';
-  const currentPath = location?.pathname || '';
-  const search = location?.search || '';
+  const currentPath = location?.pathname || window.location.pathname || '';
+  const search = location?.search || window.location.search || '';
 
   // UTM en snake_case
   const urlParams = new URLSearchParams(search);
@@ -124,7 +178,7 @@ export const trackVisitor = async (location) => {
       user_agent: userAgent,
       referrer,
       current_path: currentPath,
-      first_visit: nowIso,   // en DB puedes mantener el primero con trigger
+      first_visit: nowIso,   // Mantén el primero con trigger si prefieres
       last_visit: nowIso,
       page_views: currentViews + 1,
       utm_source,
@@ -132,7 +186,7 @@ export const trackVisitor = async (location) => {
       utm_campaign,
       utm_content,
       utm_term,
-      country_code,          // útil si deseas guardarlo
+      country_code,
     };
 
     const { error: upsertError } = await supabase
